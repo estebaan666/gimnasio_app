@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Próximas membresías a vencer</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Cliente</th>
+            <th>Tipo de membresía</th>
+            <th>Fecha de vencimiento</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in membresias %}
+        <tr>
+            <td>{{ m.nombre }} {{ m.apellido }}</td>
+            <td>{{ m.tipo_membresia or 'Personalizada' }}</td>
+            <td>{{ m.fecha_fin }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="3">No hay membresías próximas a vencer.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('index') }}" class="btn btn-secondary">Volver al dashboard</a>
+{% endblock %}

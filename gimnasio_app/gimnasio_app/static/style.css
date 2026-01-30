@@ -1,0 +1,301 @@
+
+
+/* ======= GENERAL ======= */
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #141e30, #3367a1);
+    color: #f5f5f5;
+}
+
+/* ======= CONTENEDOR PRINCIPAL ======= */
+.client-container {
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+/* ======= BUSCADOR ======= */
+.client-search {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.client-search input {
+    padding: 0.8rem 1.2rem;
+    width: 380px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(6px);
+    transition: all 0.3s ease;
+}
+
+.client-search input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.client-search input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    box-shadow: 0 0 12px rgba(0, 173, 255, 0.6);
+}
+
+/* ======= TARJETAS DE CLIENTES ======= */
+.client-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    justify-items: center;
+}
+
+.client-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.client-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+}
+
+/* Imagen de cliente */
+.client-card img {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #00c6ff;
+    box-shadow: 0 0 15px rgba(0,198,255,0.5);
+}
+
+/* Información del cliente */
+.client-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+}
+
+.client-info strong {
+    font-size: 1.2rem;
+    color: #fff;
+    font-weight: 600;
+}
+
+.client-info small {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.75);
+}
+
+/* ======= BOTONES ======= */
+.register-button {
+    padding: 0.7rem 1.2rem;
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,114,255,0.5);
+}
+
+.register-button:hover {
+    background: linear-gradient(135deg, #0072ff, #00c6ff);
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(0,114,255,0.7);
+}
+
+/* Botón de eliminar con estilo especial */
+.register-button.danger,
+.register-button[style*="crimson"] {
+    background: linear-gradient(135deg, #ff416c, #ff4b2b) !important;
+    box-shadow: 0 4px 15px rgba(255,65,108,0.5);
+}
+
+.register-button.danger:hover,
+.register-button[style*="crimson"]:hover {
+    background: linear-gradient(135deg, #ff4b2b, #ff416c) !important;
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(255,65,108,0.7);
+}
+
+/* ======= HEADER ======= */
+.client-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+/* Imagen más grande */
+.client-card img {
+    width: 120px;
+    height: 120px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+.client-card img:hover {
+    transform: scale(1.1);
+}
+
+/* ======= MODAL ======= */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.4s ease;
+    z-index: 999;
+}
+
+.modal-content {
+    background: #1e2a38;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    color: #f5f5f5;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    animation: slideUp 0.4s ease;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #00c6ff;
+    text-align: center;
+}
+
+.close {
+    position: absolute;
+    top: 15px; right: 25px;
+    font-size: 2rem;
+    color: #fff;
+    cursor: pointer;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+
+/* ===== MODAL BODY ===== */
+.modal-body {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+/* FOTO GRANDE CUADRADA */
+.modal-photo img {
+    width: 220px;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 3px solid #00c6ff;
+    box-shadow: 0 0 25px rgba(0,198,255,0.6);
+}
+
+/* INFO DEL CLIENTE */
+.modal-info {
+    flex: 1;
+}
+
+.modal-info p {
+    margin: 0.4rem 0;
+    font-size: 0.95rem;
+}
+
+/* ===== BOTONES MODAL ===== */
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    gap: 1rem;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 0.8rem 1rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.modal-btn.close-btn {
+    background: linear-gradient(135deg, #999, #666);
+    color: #fff;
+}
+.modal-btn.close-btn:hover {
+    background: linear-gradient(135deg, #666, #999);
+    transform: scale(1.05);
+}
+
+.modal-btn.edit-btn {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: #fff;
+}
+.modal-btn.edit-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,114,255,0.7);
+}
+
+.modal-btn.delete-btn {
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    color: #fff;
+}
+.modal-btn.delete-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255,65,108,0.7);
+}
+
+
+/* ======= MODAL FOTO ======= */
+.modal-photo {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-photo img {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px; /* cuadrado con bordes suaves */
+    border: 3px solid #00c6ff;
+    box-shadow: 0 0 15px rgba(0,198,255,0.5);
+}
+
+
+

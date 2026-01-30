@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+.dashboard-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+.card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.card:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+}
+.card-body {
+    padding: 2rem 1rem;
+}
+.card-body h2 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+.card-body p {
+    color: #334155; /* mayor contraste, menos opacidad visual */
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.35);
+    align-items: center;
+    justify-content: center;
+}
+.modal-content {
+    background: #1e2a38; /* fondo oscuro como en Clientes */
+    border-radius: 10px;
+    padding: 2rem 1.5rem;
+    max-width: 420px;
+    width: 90%;
+    position: relative;
+    color: #f5f5f5;
+}
+.modal-content h3, .modal-content p, .modal-content a, .modal-content small, .modal-content strong {
+    color: #f5f5f5;
+}
+.close-modal {
+    position: absolute;
+    right: 1rem; top: 1rem;
+    font-size: 1.5rem;
+    color: #888;
+    cursor: pointer;
+}
+@media (max-width: 600px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="dashboard-container">
+    <h2>GIMNASOFT</h2>
+    <p class="welcome">Bienvenido al sistema de gestión de gimnasio</p>
+
+    <div class="dashboard-grid">
+        <div class="card" onclick="openModal('modal-miembros')">
+            <div class="card-body text-center">
+                <div class="dash-icon-wrap"><i class="fas fa-users dash-icon"></i></div>
+                <div class="dash-value">{{ total_miembros }}</div>
+                <p>Total de miembros</p>
+            </div>
+        </div>
+        <div class="card" onclick="openModal('modal-inscripciones')">
+            <div class="card-body text-center">
+                <div class="dash-icon-wrap"><i class="fas fa-clipboard-list dash-icon"></i></div>
+                <div class="dash-value">{{ nuevas_inscripciones }}</div>
+                <p>Nuevas inscripciones este mes</p>
+            </div>
+        </div>
+        <div class="card" onclick="openModal('modal-activos')">
+            <div class="card-body text-center">
+                <div class="dash-icon-wrap"><i class="fas fa-user-check dash-icon"></i></div>
+                <div class="dash-value">{{ miembros_activos }}</div>
+                <p>Miembros activos</p>
+            </div>
+        </div>
+        <div class="card" onclick="openModal('modal-estadisticas')">
+            <div class="card-body text-center">
+                <div class="dash-icon-wrap"><i class="fas fa-chart-line dash-icon"></i></div>
+                <div class="dash-value">&nbsp;</div>
+                <p>Estadísticas y progresos</p>
+            </div>
+        </div>
+        <div class="card" onclick="openModal('modal-vencidas')">
+            <div class="card-body text-center">
+                <div class="dash-icon-wrap"><i class="fas fa-calendar-xmark dash-icon"></i></div>
+                <div class="dash-value">{{ membresias_vencidas|length }}</div>
+                <p>Membresías vencidas</p>
+            </div>
+        </div>
+        <div class="card" onclick="openModal('modal-ingresos')">
+            <div class="card-body text-center">
+                <div class="dash-icon-wrap"><i class="fas fa-coins dash-icon"></i></div>
+                <div class="dash-value">{{ ingresos_dia|cop }}</div>
+                <p>Total de ingresos hoy</p>
+            </div>
+        </div>
+        <div class="card" onclick="openModal('modal-promos')">
+            <div class="card-body text-center">
+                <div class="dash-icon-wrap"><i class="fas fa-tags dash-icon"></i></div>
+                <div class="dash-value">&nbsp;</div>
+                <p>Productos en promociones</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales -->
+<div id="modal-miembros" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('modal-miembros')">&times;</span>
+        <h3>Total de miembros</h3>
+        <p>Actualmente hay <b>{{ total_miembros }}</b> miembros registrados en el gimnasio.</p>
+        <a href="{{ url_for('obtener_clientes') }}">Ver lista de miembros</a>
+    </div>
+</div>
+<div id="modal-inscripciones" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('modal-inscripciones')">&times;</span>
+        <h3>Nuevas inscripciones este mes</h3>
+        <p>Se han registrado <b>{{ nuevas_inscripciones }}</b> nuevas inscripciones en el mes actual.</p>
+        <a href="{{ url_for('obtener_clientes') }}">Ver detalles</a>
+    </div>
+</div>
+<div id="modal-activos" class="modal">
+    <div class="modal-content" style="max-width: 960px;">
+        <span class="close-modal" onclick="closeModal('modal-activos')">&times;</span>
+        <h3>Miembros activos</h3>
+        <p>Hay <b>{{ miembros_activos }}</b> miembros con membresía activa.</p>
+        <div class="client-cards">
+            {% for c in clientes_activos %}
+            <div class="client-card">
+                <img src="{{ c.foto_url or url_for('static', filename='img/default-user.png') }}" alt="Foto de {{ c.nombre }}" style="cursor:pointer" class="client-photo-dash js-open-cliente-dash" data-cliente='{{ c|tojson|safe }}'>
+                <div class="client-info">
+                    <strong>{{ c.nombre }} {{ c.apellido }}</strong>
+                    <small>📛 Membresía: {{ c.tipo_membresia or 'N/A' }}</small>
+                    <small>📅 Próximo pago: {{ c.proximo_pago or 'N/D' }}</small>
+                    <small>💳 Estado de pago: activo</small>
+                </div>
+            </div>
+            {% else %}
+            <p>No hay miembros activos.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<div id="modal-estadisticas" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('modal-estadisticas')">&times;</span>
+        <h3>Estadísticas y progresos</h3>
+        <p>Consulta los progresos físicos y estadísticas de tus miembros.</p>
+        <a href="{{ url_for('obtener_clientes') }}">Ver progresos</a>
+    </div>
+</div>
+<div id="modal-ingresos" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('modal-ingresos')">&times;</span>
+        <h3>Total de ingresos hoy</h3>
+        <p>Ingresos registrados hoy: <b>{{ ingresos_dia|cop }}</b></p>
+        <a href="{{ url_for('finanzas') }}">Ver finanzas</a>
+    </div>
+</div>
+
+<!-- Modal Promociones de Productos -->
+<div id="modal-promos" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('modal-promos')">&times;</span>
+        <h3>Productos en promociones</h3>
+        <p>Administra y envía promociones de tus productos.</p>
+        <a href="{{ url_for('obtener_productos') }}">Ir a Productos</a>
+    </div>
+</div>
+
+<!-- Modal de vencidas con Recordatorio -->
+<div id="modal-vencidas" class="modal">
+    <div class="modal-content" style="max-width: 960px;">
+        <span class="close-modal" onclick="closeModal('modal-vencidas')">&times;</span>
+        <h3>Membresías vencidas</h3>
+        <div class="client-cards">
+            {% for m in membresias_vencidas %}
+            <div class="client-card">
+                <img src="{{ m.foto_url }}" alt="Foto de {{ m.nombre }}" style="cursor:pointer" class="client-photo-dash js-open-cliente-dash" data-cliente='{{ m|tojson|safe }}'>
+                <div class="client-info">
+                    <strong>{{ m.nombre }} {{ m.apellido }}</strong>
+                    <small>📛 Membresía: {{ m.tipo_membresia }}</small>
+                    <small>📅 Venció: {{ m.fecha_fin }}</small>
+                    <small>💰 Costo: {{ (m.costo or 0)|cop }}</small>
+                </div>
+                <div>
+                    <button class="register-button" 
+                        onclick="abrirRecordatorio(this)"
+                        data-nombre="{{ m.nombre }} {{ m.apellido }}"
+                        data-telefono="{{ m.telefono or '' }}"
+                        data-email="{{ m.email or '' }}"
+                        data-fecha="{{ m.fecha_fin }}"
+                        data-membresia="{{ m.tipo_membresia or 'Membresía' }}"
+                        data-costo-cop="{{ (m.costo or 0)|cop }}">
+                        Recordar pago
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <p>No hay membresías vencidas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Sub-modal para elegir canal y editar mensaje -->
+<div id="modal-recordatorio" class="modal">
+  <div class="modal-content" style="max-width: 640px;">
+    <span class="close-modal" onclick="closeModal('modal-recordatorio')">&times;</span>
+    <h3>Recordar pago</h3>
+    <p>Elige el canal y edita el mensaje si deseas.</p>
+    <textarea id="mensajeRecordatorio" rows="5" style="width:100%; border-radius:10px; padding:10px; background:#fff; color:#111;"></textarea>
+    <div style="display:flex; gap:10px; margin-top:12px;">
+        <button class="btn btn-primary" onclick="enviarWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+        <button class="btn btn-primary" onclick="enviarCorreo()"><i class="fas fa-envelope"></i> Correo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// URL por defecto para foto (evita parsers confundidos por Jinja dentro de expresiones)
+const DEFAULT_PHOTO_URL = "{{ url_for('static', filename='img/default-user.png') }}";
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+// Cerrar modal al hacer click fuera del contenido
+window.onclick = function(event) {
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        if (event.target === modal) modal.style.display = "none";
+    });
+}
+</script>
+
+<!-- Modal de detalles (Tablero) -->
+<div id="clientModalDash" class="modal">
+  <div class="modal-content" style="max-width: 800px;">
+    <span class="close-modal" onclick="closeClientModalDash()">&times;</span>
+    <div class="modal-body" style="display:flex; gap:20px; align-items:flex-start;">
+      <div class="modal-photo">
+        <img id="dashModalFoto" src="{{ url_for('static', filename='img/default-user.png') }}" alt="Foto del cliente" style="width:160px; height:160px; border-radius:50%; object-fit:cover; border:4px solid #00aaff;">
+      </div>
+      <div class="modal-info" style="flex:1;">
+        <h2 id="dashModalNombre" style="margin-top:0;"></h2>
+        <p><strong>Identificación:</strong> <span id="dashModalIdentificacion"></span></p>
+        <p><strong>Género:</strong> <span id="dashModalGenero"></span></p>
+        <p><strong>Fecha de nacimiento:</strong> <span id="dashModalNacimiento"></span></p>
+        <p><strong>Teléfono:</strong> <span id="dashModalTelefono"></span></p>
+        <p><strong>Email:</strong> <span id="dashModalEmail"></span></p>
+        <p><strong>Dirección:</strong> <span id="dashModalDireccion"></span></p>
+        <p><strong>Enfermedades:</strong> <span id="dashModalEnfermedades"></span></p>
+        <p><strong>Alergias:</strong> <span id="dashModalAlergias"></span></p>
+        <p><strong>Fracturas:</strong> <span id="dashModalFracturas"></span></p>
+        <p><strong>Observaciones médicas:</strong> <span id="dashModalObservaciones"></span></p>
+      </div>
+    </div>
+    <div class="modal-actions" style="display:flex; gap:10px; margin-top:12px;">
+      <button class="modal-btn close-btn" onclick="closeClientModalDash()">❌ Cerrar</button>
+      <button class="modal-btn edit-btn" onclick="editarClienteDash()">✏️ Editar</button>
+    </div>
+  </div>
+  </div>
+
+<script>
+function showDetailsDashboard(cliente) {
+  document.getElementById('dashModalNombre').textContent = (cliente.nombre || '') + ' ' + (cliente.apellido || '');
+  document.getElementById('dashModalIdentificacion').textContent = cliente.identificacion || 'N/D';
+  document.getElementById('dashModalGenero').textContent = cliente.genero || 'N/D';
+  document.getElementById('dashModalNacimiento').textContent = cliente.fecha_nacimiento || 'N/D';
+  document.getElementById('dashModalTelefono').textContent = cliente.telefono || 'N/D';
+  document.getElementById('dashModalEmail').textContent = cliente.email || 'N/D';
+  document.getElementById('dashModalDireccion').textContent = cliente.direccion || 'N/D';
+  document.getElementById('dashModalEnfermedades').textContent = cliente.enfermedades || 'N/D';
+  document.getElementById('dashModalAlergias').textContent = cliente.alergias || 'N/D';
+  document.getElementById('dashModalFracturas').textContent = cliente.fracturas || 'N/D';
+  document.getElementById('dashModalObservaciones').textContent = cliente.observaciones_medicas || 'N/D';
+  document.getElementById('dashModalFoto').src = cliente.foto_url || DEFAULT_PHOTO_URL;
+  const modal = document.getElementById('clientModalDash');
+  modal.dataset.clienteId = cliente.id_cliente || '';
+  modal.style.display = 'flex';
+}
+function closeClientModalDash(){
+  document.getElementById('clientModalDash').style.display = 'none';
+}
+function editarClienteDash(){
+  const id = document.getElementById('clientModalDash').dataset.clienteId;
+  if(id){ window.location.href = `/clientes/editar/${id}`; }
+}
+</script>
+        <a href="{{ url_for('finanzas') }}">Ver finanzas</a>
+    </div>
+</div>
+
+<script>
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+// Cerrar modal al hacer click fuera del contenido
+window.onclick = function(event) {
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        if (event.target === modal) modal.style.display = "none";
+    });
+}
+
+// ==== Recordatorios ====
+let datosRecordatorio = { telefono: '', email: '' };
+function abrirRecordatorio(btn) {
+  const nombre = btn.dataset.nombre || '';
+  const fecha = btn.dataset.fecha || '';
+  const membresia = btn.dataset.membresia || 'Membresía';
+  const costo = btn.dataset.costoCop || 'COP $0';
+  datosRecordatorio.telefono = (btn.dataset.telefono || '').replace(/\s+/g,'');
+  datosRecordatorio.email = btn.dataset.email || '';
+
+  const mensaje = `Hola ${nombre}, te recordamos que tu ${membresia} vence el ${fecha}.\nValor de renovación: ${costo}.\n¿Deseas renovar?`;
+  document.getElementById('mensajeRecordatorio').value = mensaje;
+  openModal('modal-recordatorio');
+}
+
+function enviarWhatsApp() {
+  const tel = datosRecordatorio.telefono.replace(/\D/g,'');
+  if (!tel) { alert('Este cliente no tiene teléfono registrado.'); return; }
+  const mensaje = document.getElementById('mensajeRecordatorio').value;
+  const url = `https://wa.me/${tel}?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, '_blank');
+}
+
+function enviarCorreo() {
+  const email = datosRecordatorio.email;
+  if (!email) { alert('Este cliente no tiene correo registrado.'); return; }
+  const mensaje = document.getElementById('mensajeRecordatorio').value;
+  const subject = 'Recordatorio de pago de membresía';
+  const url = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(mensaje)}`;
+  window.location.href = url;
+}
+</script>
+
+<!-- Listeners para abrir modal de cliente desde imágenes (sin inline JS) -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.js-open-cliente-dash').forEach(el => {
+    el.addEventListener('click', () => {
+      const json = el.getAttribute('data-cliente');
+      try {
+        const cliente = JSON.parse(json);
+        showDetailsDashboard(cliente);
+      } catch (e) {
+        console.error('No se pudo leer datos del cliente (dash)', e);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/comprobantes.css') }}">
+<div class="cmp-wrap">
+  <h2>Ver comprobantes</h2>
+  <form class="filters" method="get" action="{{ url_for('comprobantes_filtrar') }}">
+    <input type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}">
+    <input type="date" name="fecha_fin" value="{{ filtros.fecha_fin }}">
+    <select name="metodo_pago">
+      <option value="">Todos</option>
+      <option value="Efectivo" {% if filtros.metodo_pago=='Efectivo' %}selected{% endif %}>Efectivo</option>
+      <option value="Tarjeta" {% if filtros.metodo_pago=='Tarjeta' %}selected{% endif %}>Tarjeta</option>
+      <option value="Transferencia" {% if filtros.metodo_pago=='Transferencia' %}selected{% endif %}>Transferencia</option>
+    </select>
+    <input type="text" name="nombre_cliente" placeholder="Nombre del cliente" value="{{ filtros.nombre_cliente }}">
+    <button class="btn btn-primary" type="submit">Filtrar</button>
+    <a class="btn btn-secondary" href="{{ url_for('comprobantes_exportar') }}">Exportar Excel</a>
+  </form>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Método</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in comprobantes %}
+        <tr>
+          <td>{{ c.numero }}</td>
+          <td>{{ c.fecha }}</td>
+          <td>{{ c.nombre_cliente }}</td>
+          <td>{{ c.metodo_pago }}</td>
+          <td>{{ c.total_pagado|cop }}</td>
+          <td>
+            <a class="btn btn-secondary" href="{{ url_for('descargar_comprobante_pdf', id_comprobante=c.id_comprobante) }}" target="_blank">Ver PDF</a>
+            {% set msg='Hola, comparto tu comprobante: ' ~ request.url_root ~ url_for('ver_comprobante', id_comprobante=c.id_comprobante) %}
+            <a class="btn btn-primary" href="https://wa.me/?text={{ msg|urlencode }}" target="_blank">Reenviar WhatsApp</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">No hay comprobantes para el filtro.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

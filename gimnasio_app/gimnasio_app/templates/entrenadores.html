@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- CSS especÃƒÂ­fico para tarjetas de entrenadores -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/entrenadores.css') }}">
+
+<div class="trainer-container">
+  <div class="trainer-header">
+    <div>
+      <h2>Entrenadores</h2>
+      <p class="text-muted">Gestiona y asigna clases de forma mÃƒÂ¡s visual.</p>
+    </div>
+    <div>
+      <a href="{{ url_for('nuevo_entrenador') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-2"></i>Nuevo Entrenador
+      </a>
+    </div>
+  </div>
+
+  <div class="trainer-search">
+    <input id="searchTrainer" type="text" placeholder="Buscar entrenador por nombre...">
+  </div>
+
+  <div id="trainerCards" class="trainer-cards">
+    {% for entrenador in entrenadores %}
+    <div class="trainer-card" data-nombre="{{ (entrenador.nombre ~ ' ' ~ entrenador.apellido)|lower }}">
+      <div class="trainer-avatar"><i class="fas fa-user-tie"></i></div>
+      <div class="trainer-info">
+        <strong>{{ entrenador.nombre }} {{ entrenador.apellido }}</strong>
+        <small><i class="fas fa-star me-1"></i> {{ entrenador.especialidad or 'N/D' }}</small>
+        <small><i class="fas fa-envelope me-1"></i> {{ entrenador.email or 'N/D' }}</small>
+        <small><i class="fas fa-phone me-1"></i> {{ entrenador.telefono or 'N/D' }}</small>
+      </div>
+      <div class="trainer-actions">
+        <a href="{{ url_for('editar_entrenador', id=entrenador.id_entrenador) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Editar"><i class="fas fa-edit"></i></a>
+        <a href="{{ url_for('asignar_clase_entrenador', id_entrenador=entrenador.id_entrenador) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Asignar clase"><i class="fas fa-calendar-plus"></i></a>
+                <form action="{{ url_for('eliminar_entrenador', id=entrenador.id_entrenador) }}" method="POST" class="d-inline">
+          <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </form>
+      </div>
+
+      <!-- Modal Bootstrap de confirmaciÃƒÂ³n -->
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+  // Filtro por nombre
+  document.addEventListener('DOMContentLoaded', function(){
+    const input = document.getElementById('searchTrainer');
+    const cards = document.querySelectorAll('#trainerCards .trainer-card');
+    if(input){
+      input.addEventListener('keyup', function(){
+        const f = this.value.toLowerCase();
+        cards.forEach(card => {
+          const name = card.getAttribute('data-nombre');
+          card.style.display = name.includes(f) ? 'flex' : 'none';
+        });
+      });
+    }
+  });
+</script>
+{% endblock %}
+{% endblock %}

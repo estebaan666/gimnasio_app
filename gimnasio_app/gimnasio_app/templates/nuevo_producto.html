@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/productos.css') }}">
+
+<div class="form-card">
+    <h2>➕ Nuevo Producto</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <label>Nombre</label>
+        <input type="text" name="nombre" required>
+
+        <label>Descripción</label>
+        <textarea name="descripcion"></textarea>
+
+        <label>Precio (COP)</label>
+        <input type="text" class="money-input" name="precio" placeholder="COP $0" required>
+
+        <label>Stock</label>
+        <input type="number" name="stock" min="0" required>
+
+        <label>Foto</label>
+        <input type="file" name="foto" accept="image/*">
+
+        <div class="form-actions">
+            <button type="submit" class="btn-guardar">💾 Guardar</button>
+            <a href="{{ url_for('obtener_productos') }}" class="btn-cancelar">❌ Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/currency_cop.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    initCopInputs();
+  });
+</script>
+{% endblock %}

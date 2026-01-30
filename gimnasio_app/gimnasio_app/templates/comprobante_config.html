@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/comprobantes.css') }}">
+<div class="cfg-wrap">
+  <h2>Configurar comprobante</h2>
+  <form method="post">
+    <div class="grid">
+      <div>
+        <label>Nombre del gimnasio</label>
+        <input type="text" name="nombre_gimnasio" value="{{ cfg.nombre_gimnasio }}">
+      </div>
+      <div>
+        <label>Logo (URL)</label>
+        <input type="text" name="logo" value="{{ cfg.logo }}">
+      </div>
+      <div>
+        <label>NIT</label>
+        <input type="text" name="nit" value="{{ cfg.nit }}">
+      </div>
+      <div>
+        <label>Teléfono</label>
+        <input type="text" name="telefono" value="{{ cfg.telefono }}">
+      </div>
+      <div style="grid-column:1 / -1">
+        <label>Dirección</label>
+        <textarea name="direccion">{{ cfg.direccion }}</textarea>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn" type="submit">Guardar configuración</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

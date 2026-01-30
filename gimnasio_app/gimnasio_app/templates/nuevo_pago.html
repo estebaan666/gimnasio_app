@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Nuevo Pago</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pagos.css') }}">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Registrar Nuevo Pago</h2>
+    <form action="{{ url_for('nuevo_pago') }}" method="POST">
+
+      <!-- Cliente -->
+      <label>Cliente:</label>
+      <select name="id_cliente" required>
+        <option value="" disabled selected>Selecciona un cliente</option>
+        {% for cliente in clientes %}
+          <option value="{{ cliente.id_cliente }}">{{ cliente.nombre }} {{ cliente.apellido }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- MembresÃ­a -->
+      <label>MembresÃ­a:</label>
+      <select name="id_membresia" id="membresiaSelect" onchange="mostrarDetallesMembresia()">
+        <option value="" selected>Sin asociar</option>
+        {% for membresia in membresias %}
+          <option 
+            value="{{ membresia.id_membresia }}"
+            data-tipo="{{ membresia.tipo_membresia }}"
+            data-inicio="{{ membresia.fecha_inicio }}"
+            data-fin="{{ membresia.fecha_fin }}">
+            {{ membresia.tipo_membresia }} ({{ membresia.fecha_inicio }} - {{ membresia.fecha_fin }})
+          </option>
+        {% endfor %}
+      </select>
+
+      <div id="detallesMembresia" class="detalles" style="display: none;">
+        <p><strong>Tipo:</strong> <span id="tipoMembresia"></span></p>
+        <p><strong>Inicio:</strong> <span id="fechaInicio"></span></p>
+        <p><strong>Vencimiento:</strong> <span id="fechaFin"></span></p>
+      </div>
+
+      <!-- Monto -->
+      <label>Monto (COP):</label>
+      <input type="text" class="money-input" name="monto" placeholder="COP $0" required>
+
+      <!-- MÃ©todo -->
+      <label>MÃ©todo de Pago:</label>
+      <select name="metodo_pago" required>
+        <option value="" disabled selected>Selecciona mÃ©todo</option>
+        <option>Efectivo</option>
+        <option>Tarjeta</option>
+        <option>Transferencia</option>
+      </select>
+
+      <button type="submit">Registrar Pago</button>
+    </form>
+
+    <a href="{{ url_for('obtener_pagos') }}" class="back-button">Volver</a>
+  </div>
+
+  <script>
+    function mostrarDetallesMembresia() {
+      const select = document.getElementById('membresiaSelect');
+      const option = select.options[select.selectedIndex];
+      const tipo = option.getAttribute('data-tipo');
+      const inicio = option.getAttribute('data-inicio');
+      const fin = option.getAttribute('data-fin');
+
+      if (tipo && inicio && fin) {
+        document.getElementById('tipoMembresia').textContent = tipo;
+        document.getElementById('fechaInicio').textContent = inicio;
+        document.getElementById('fechaFin').textContent = fin;
+        document.getElementById('detallesMembresia').style.display = 'block';
+      } else {
+        document.getElementById('detallesMembresia').style.display = 'none';
+      }
+    }
+  </script>
+  <script src="{{ url_for('static', filename='js/currency_cop.js') }}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      initCopInputs();
+    });
+  </script>
+  
+</body>
+</html>
+
+

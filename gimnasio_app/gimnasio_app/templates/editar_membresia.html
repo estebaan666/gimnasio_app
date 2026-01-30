@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/membresias.css') }}">
+
+<div class="container">
+  <h1>✏️ Editar Membresía</h1>
+
+  <form method="POST" class="form-card">
+    <!-- Cliente -->
+    <label>Cliente:</label>
+    <select name="id_cliente" required>
+      {% for c in clientes %}
+      <option value="{{ c.id_cliente }}" {% if c.id_cliente == membresia.id_cliente %}selected{% endif %}>
+        {{ c.nombre }} {{ c.apellido }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <!-- Tipo de Membresía -->
+    <label>Tipo de Membresía:</label>
+    <select name="id_tipo_membresia" id="tipoMembresiaSelect" onchange="toggleDiasPersonalizados()">
+      <option value="">Seleccionar tipo</option>
+      {% for t in tipos %}
+      <option value="{{ t.id_tipo_membresia }}" {% if t.id_tipo_membresia == membresia.id_tipo_membresia %}selected{% endif %}>
+        {{ t.nombre }} ({{ t.duracion_dias }} días)
+      </option>
+      {% endfor %}
+      <option value="personalizado" {% if not membresia.id_tipo_membresia %}selected{% endif %}>📌 Personalizado (por días)</option>
+    </select>
+
+    <!-- Días personalizados -->
+    <div id="diasPersonalizadosBox" style="display: {% if not membresia.id_tipo_membresia %}block{% else %}none{% endif %};">
+      <label>Días personalizados:</label>
+      <input type="number" name="dias_personalizados"
+             value="{% if not membresia.id_tipo_membresia %}{{ (membresia.fecha_fin - membresia.fecha_inicio).days }}{% endif %}">
+    </div>
+
+    <!-- Fechas -->
+    <label>Fecha de inicio:</label>
+    <input type="date" name="fecha_inicio" value="{{ membresia.fecha_inicio }}" required>
+
+    <label>Fecha de fin:</label>
+    <input type="date" name="fecha_fin" value="{{ membresia.fecha_fin }}" required>
+
+    <!-- Botones -->
+    <div class="form-actions">
+      <button type="submit" class="btn">💾 Actualizar</button>
+      <a href="{{ url_for('obtener_membresias') }}" class="btn danger">⬅ Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function toggleDiasPersonalizados() {
+  const select = document.getElementById("tipoMembresiaSelect");
+  const box = document.getElementById("diasPersonalizadosBox");
+  if (select.value === "personalizado") {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+  }
+}
+</script>
+{% endblock %}

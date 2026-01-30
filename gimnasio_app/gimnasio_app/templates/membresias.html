@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/membresias.css') }}">
+
+<div class="container">
+  <h1>📋 Membresías</h1>
+  <a href="{{ url_for('nueva_membresia') }}" class="btn">+ Nueva Membresía</a>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Tipo</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in membresias %}
+      <tr>
+        <td>{{ m.id_membresia }}</td>
+        <td>{{ m.nombre_cliente }} {{ m.apellido_cliente }}</td>
+       <td>
+  {% if m.fecha_fin < hoy %}
+    <span class="badge badge-danger">Vencida</span>
+  {% elif "Pase Diario" in m.tipo_membresia %}
+    <span class="badge badge-custom">{{ m.tipo_membresia }}</span>
+  {% else %}
+    {{ m.tipo_membresia }}
+  {% endif %}
+</td>
+
+        <td>{{ m.fecha_inicio }}</td>
+        <td>{{ m.fecha_fin }}</td>
+        <td>
+          <a href="{{ url_for('editar_membresia', id=m.id_membresia) }}" class="btn small">Editar</a>
+          <form action="{{ url_for('eliminar_membresia', id=m.id_membresia) }}" method="POST" style="display:inline;">
+            <button type="submit" class="btn small danger">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

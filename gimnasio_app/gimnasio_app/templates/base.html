@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Gimnasio</title>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Bootstrap CSS (necesario para modales, tooltips, grid) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2b8jvZB1zv9+M1QZ6g6M9" crossorigin="anonymous">
+
+    <!-- Tus estilos personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/finanzas.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="gym-logo">
+            <i class="fas fa-dumbbell"></i> GYM
+        </div>
+        <nav>
+            <a class="{% if request.path == '/' %}active{% endif %}" href="{{ url_for('index') }}">
+                <i class="fas fa-home menu-icon"></i> Tablero
+            </a>
+            <a class="{% if 'membresias' in request.path %}active{% endif %}" href="{{ url_for('obtener_membresias') }}">
+                <i class="fas fa-id-card menu-icon"></i> Membresías
+            </a>
+            <a class="{% if 'clientes' in request.path %}active{% endif %}" href="{{ url_for('obtener_clientes') }}">
+                <i class="fas fa-users menu-icon"></i> Clientes
+            </a>
+            <a class="{% if 'finanzas' in request.path %}active{% endif %}" href="{{ url_for('finanzas') }}">
+                <i class="fas fa-dollar-sign menu-icon"></i> Finanzas
+            </a>
+            <a class="{% if 'productos' in request.path %}active{% endif %}" href="{{ url_for('obtener_productos') }}">
+                <i class="fas fa-shopping-cart menu-icon"></i> Productos
+            </a>
+            <a class="{% if 'clases' in request.path %}active{% endif %}" href="{{ url_for('obtener_clases') }}">
+                <i class="fas fa-running menu-icon"></i> Clases
+            </a>
+            <a class="{% if 'entrenadores' in request.path %}active{% endif %}" href="{{ url_for('obtener_entrenadores') }}">
+                <i class="fas fa-user-tie menu-icon"></i> Entrenadores
+            </a>
+            
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap JS Bundle (incluye Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <!-- Script general -->
+    <script>
+        // Cerrar mensajes flash automáticamente
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(el => el.remove());
+        }, 5000);
+
+        // Inicializar tooltips de Bootstrap en toda la app
+        document.addEventListener('DOMContentLoaded', function(){
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+              new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Toggle "Medidas corporales" si existe en la página
+            const toggleBtn = document.getElementById('toggleMedidas');
+            const medidasBox = document.getElementById('medidasBox');
+            if (toggleBtn && medidasBox) {
+                toggleBtn.addEventListener('click', function(ev){
+                    ev.preventDefault();
+                    ev.stopImmediatePropagation();
+                    const current = medidasBox.style.display;
+                    medidasBox.style.display = (current === 'none' || current === '') ? 'block' : 'none';
+                }, true); // capture para evitar doble toggle
+            }
+
+            // Cálculo automático de IMC si existen los campos
+            const pesoInput = document.querySelector('input[name="peso"]');
+            const alturaInput = document.getElementById('alturaInput');
+            const imcInput = document.getElementById('imcInput');
+            function calcIMC(){
+              const peso = parseFloat(pesoInput?.value);
+              const alturaCm = parseFloat(alturaInput?.value);
+              if (!isNaN(peso) && !isNaN(alturaCm) && alturaCm > 0){
+                const alturaM = alturaCm / 100.0;
+                const imc = peso / (alturaM * alturaM);
+                if (imcInput) imcInput.value = imc.toFixed(2);
+              } else {
+                if (imcInput) imcInput.value = '';
+              }
+            }
+            if (pesoInput) pesoInput.addEventListener('input', calcIMC);
+            if (alturaInput) alturaInput.addEventListener('input', calcIMC);
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

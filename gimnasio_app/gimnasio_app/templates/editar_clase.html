@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Editar Clase</h2>
+            <p class="text-muted">Actualizar información de la clase</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('obtener_clases') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-running me-2"></i>Editar Información de la Clase
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('editar_clase', id=clase.id_clase) }}" method="POST">
+                        <div class="mb-3">
+                            <label for="nombre_clase" class="form-label">Nombre de la Clase <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nombre_clase" name="nombre_clase" value="{{ clase.nombre_clase }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_entrenador" class="form-label">Entrenador</label>
+                            <select class="form-select" id="id_entrenador" name="id_entrenador">
+                                <option value="">Ninguno</option>
+                                {% for entrenador in entrenadores %}
+                                <option value="{{ entrenador.id_entrenador }}" {% if entrenador.id_entrenador == clase.id_entrenador %}selected{% endif %}>{{ entrenador.nombre }} {{ entrenador.apellido }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fecha_hora" class="form-label">Fecha y Hora <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="fecha_hora" name="fecha_hora" value="{{ clase.fecha_hora|replace(' ', 'T') }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="duracion" class="form-label">Duración (minutos) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="duracion" name="duracion" min="15" max="180" value="{{ clase.duracion }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="max_participantes" class="form-label">Máximo de Participantes <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="max_participantes" name="max_participantes" min="1" max="100" value="{{ clase.max_participantes }}" required>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ url_for('obtener_clases') }}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Actualizar Clase
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

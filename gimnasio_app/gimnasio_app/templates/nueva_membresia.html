@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nueva_membresia.css') }}">
+
+<div class="form-container">
+  <h2>➕ Nueva Membresía con Pago</h2>
+  <form method="POST">
+    <!-- Cliente -->
+    <label>Cliente:</label>
+    <select name="id_cliente" required>
+      {% for c in clientes %}
+      <option value="{{ c.id_cliente }}">{{ c.nombre }} {{ c.apellido }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Tipo Membresía -->
+    <label>Tipo de Membresía:</label>
+    <select name="id_tipo_membresia" id="tipoMembresiaSelect" required onchange="toggleDiasPersonalizados()">
+      <option value="" selected>Seleccionar tipo de membresía</option>
+      {% for t in tipos %}
+      <option value="{{ t.id_tipo_membresia }}">{{ t.nombre }} ({{ t.duracion_dias }} días)</option>
+      {% endfor %}
+      <option value="personalizado">📌 Personalizado (por días)</option>
+    </select>
+
+    <!-- Días personalizados (oculto por defecto) -->
+    <div id="diasPersonalizadosBox" style="display:none; margin-top:10px;">
+      <label>Días personalizados:</label>
+      <input type="number" name="dias_personalizados" placeholder="Ej: 45">
+    </div>
+
+    <!-- Fechas -->
+    <label>Fecha de inicio:</label>
+    <input type="date" name="fecha_inicio" required>
+
+    <!-- Pago -->
+    <h3>💳 Pago</h3>
+    <label>Monto (COP):</label>
+    <input type="text" class="money-input" name="monto" placeholder="COP $0" required>
+
+    <label>Método de pago:</label>
+    <select name="metodo_pago" required>
+      <option value="Efectivo">Efectivo</option>
+      <option value="Transferencia">Transferencia</option>
+      <option value="Tarjeta">Tarjeta</option>
+    </select>
+
+    <label>Número de referencia (opcional):</label>
+    <input type="text" name="numero_referencia">
+
+    <!-- Botones -->
+    <button type="submit">Guardar Membresía + Pago</button>
+  </form>
+  <a href="{{ url_for('obtener_membresias') }}" class="back-button">⬅ Volver</a>
+</div>
+
+<script>
+function toggleDiasPersonalizados() {
+  const select = document.getElementById("tipoMembresiaSelect");
+  const box = document.getElementById("diasPersonalizadosBox");
+  if (select.value === "personalizado") {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+  }
+}
+</script>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/currency_cop.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    initCopInputs();
+  });
+</script>
+{% endblock %}
+{% endblock %}
+

@@ -1,0 +1,132 @@
+/* ====== FONDO GENERAL ====== */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* estilo gym */
+  margin: 0;
+  padding: 0;
+  color: #f5f5f5;
+}
+
+/* ====== CONTENEDOR DEL FORMULARIO ====== */
+.form-container {
+  background: rgba(0, 0, 0, 0.75);
+  padding: 2.5rem;
+  border-radius: 20px;
+  max-width: 600px;
+  margin: 3rem auto;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.7);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.8s ease-out;
+}
+
+/* Animación */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ====== TITULO ====== */
+.form-container h2 {
+  text-align: center;
+  font-size: 2.2rem;
+  color: #00ff88;
+  text-shadow: 0 0 15px rgba(0,255,136,0.7);
+  margin-bottom: 2rem;
+}
+
+/* ====== SUBTITULO PAGO ====== */
+.form-container h3 {
+  margin-top: 1.5rem;
+  font-size: 1.4rem;
+  color: #00bfff;
+  text-shadow: 0 0 12px rgba(0,191,255,0.6);
+  border-bottom: 2px solid rgba(0,191,255,0.3);
+  padding-bottom: 0.5rem;
+}
+
+/* ====== CAMPOS ====== */
+label {
+  font-weight: bold;
+  color: #00ff88;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+input, select {
+  width: 100%;
+  padding: 0.9rem;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  margin-bottom: 1.2rem;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* Fix dropdown options visibility */
+option {
+  background-color: #0f2027; /* Fondo oscuro para las opciones */
+  color: #fff; /* Texto blanco */
+}
+
+input:focus, select:focus {
+  background: rgba(0,255,136,0.15);
+  box-shadow: 0 0 12px rgba(0,255,136,0.7);
+  transform: scale(1.02);
+}
+
+/* ====== BOTONES ====== */
+button, .back-button {
+  display: inline-block;
+  padding: 1rem 1.8rem;
+  font-weight: bold;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+/* Botón Guardar */
+button {
+  background: linear-gradient(45deg, #00ff88, #00bfff);
+  color: #111;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+button:hover {
+  background: linear-gradient(45deg, #00bfff, #00ff88);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 18px rgba(0,255,136,0.5);
+}
+
+/* Botón Volver */
+.back-button {
+  margin-top: 1.2rem;
+  text-align: center;
+  display: block;
+  background: linear-gradient(45deg, #ff416c, #ff4b2b);
+  color: #fff;
+  padding: 0.9rem 1.5rem;
+}
+
+.back-button:hover {
+  background: linear-gradient(45deg, #ff4b2b, #ff416c);
+  box-shadow: 0 8px 18px rgba(255,65,108,0.6);
+  transform: translateY(-2px);
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 600px) {
+  .form-container {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  .form-container h2 {
+    font-size: 1.6rem;
+  }
+}

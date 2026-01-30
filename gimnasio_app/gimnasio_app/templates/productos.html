@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/productos.css') }}">
+
+<div class="productos-header">
+    <h2>🛍️ Productos</h2>
+    <div style="display:flex; gap:10px;">
+      <a href="{{ url_for('nuevo_producto') }}" class="btn-agregar">+ Nuevo Producto</a>
+      <button class="btn-agregar" onclick="openPromocionesModal()">🎯 Productos en promociones</button>
+    </div>
+</div>
+
+<div class="productos-grid">
+    {% for producto in productos %}
+    <div class="producto-card">
+        <!-- Imagen del producto -->
+        <div class="producto-foto">
+            {% if producto.foto %}
+                <img src="{{ url_for('static', filename='uploads/' ~ producto.foto) }}" alt="foto {{ producto.nombre }}">
+            {% else %}
+                <div class="sin-foto">No Foto</div>
+            {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="producto-info">
+            <h3>{{ producto.nombre }}</h3>
+            <p class="descripcion">{{ producto.descripcion or "Sin descripción" }}</p>
+            <p class="precio">{{ producto.precio|cop }}</p>
+            
+            <!-- Stock con colores -->
+            <p class="stock 
+                {% if producto.stock > 10 %} stock-ok 
+                {% elif producto.stock > 5 %} stock-warning 
+                {% else %} stock-danger 
+                {% endif %}">
+                📦 Stock: {{ producto.stock }}
+            </p>
+        </div>
+
+        <!-- Botones -->
+        <div class="producto-actions">
+            <a href="{{ url_for('editar_producto', id_producto=producto.id_producto) }}" class="btn-editar">✏️ Editar</a>
+            <form action="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}" method="POST">
+                <button type="submit" class="btn-eliminar">🗑️ Eliminar</button>
+            </form>
+            <a href="{{ url_for('nueva_venta', id_producto=producto.id_producto) }}" class="btn-vender">💳 Vender</a>
+            <button class="btn-vender js-promo-btn" style="background:#00bcd4;" 
+                    data-id="{{ producto.id_producto }}" 
+                    data-nombre='{{ producto.nombre|tojson }}' 
+                    data-foto-url='{{ (producto.foto and url_for('static', filename='uploads/' ~ producto.foto))|tojson }}'>🎟️ Promocionar</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal: Crear promoción -->
+<div id="modal-promocionar" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:640px;">
+    <span class="close-modal" onclick="closeModal('modal-promocionar')">&times;</span>
+    <h3>Crear promoción</h3>
+    <p id="promo-producto-nombre" style="margin:0 0 8px 0;"></p>
+    <img id="promo-producto-foto" src="" alt="Foto producto" class="preview-foto" style="display:none;">
+    <form id="formPromocion" method="POST" action="#">
+      <label>Precio promocional (COP)</label>
+      <input type="text" class="money-input" name="precio_promocional" placeholder="COP $0" required>
+      <label>Frase o texto de promoción</label>
+      <textarea name="frase" placeholder="Ej: ¡2x1 solo por hoy!"></textarea>
+      <label style="display:flex; gap:8px; align-items:center;">
+        <input type="checkbox" name="incluir_foto" checked>
+        Incluir foto del producto en el mensaje
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn-guardar">💾 Guardar promoción</button>
+        <a href="#" class="btn-cancelar" onclick="closeModal('modal-promocionar'); return false;">❌ Cancelar</a>
+      </div>
+    </form>
+  </div>
+  <style>
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:1000;}
+    .modal-content{background:#111827;color:#e5e7eb;border-radius:12px;padding:20px;box-shadow:0 10px 25px rgba(0,0,0,0.4);} 
+    .close-modal{cursor:pointer;font-size:24px;float:right;}
+    /* Toggle despliegue y botón quitar */
+    .promo-header .chevron{margin-right:6px;transition:transform .2s ease;}
+    .promos-collapsed .chevron{transform:rotate(-90deg);} 
+    .promo-item{position:relative;}
+    .promo-remove{position:absolute; top:8px; right:8px; background:#ef4444; color:#fff; border:none; border-radius:999px; width:28px; height:28px; cursor:pointer; font-weight:700;}
+    .promo-remove:hover{background:#dc2626;}
+    /* Panel de promociones con scroll vertical y animación */
+    #promosList.promos-anim{ overflow-y:auto; transition:max-height .25s ease; max-height:60vh; }
+    #promosList.promos-collapsed{ max-height:0; }
+  </style>
+</div>
+
+<!-- Modal: Productos en promociones -->
+<div id="modal-promociones" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:960px;">
+    <span class="close-modal" onclick="closeModal('modal-promociones')">&times;</span>
+    <div class="promo-header" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;" onclick="togglePromosPanel()">
+      <span class="chevron">▲</span>
+      <i class="fa-solid fa-bullhorn" style="color:#3b82f6;"></i>
+      <h3 style="margin:0;">Promociones activas</h3>
+    </div>
+    <p class="promo-hint" style="margin:0 0 10px 0;color:#a3bffa;">Comparte ofertas fácilmente por WhatsApp o correo. ¡Impulsa tus ventas!</p>
+    <div class="clientes-box">
+      <div class="clientes-toolbar">
+        <label class="clientes-toggle">
+          <input type="checkbox" id="enviarATodos" checked>
+          Enviar a todos los clientes
+        </label>
+        <input id="buscarCliente" type="text" class="clientes-search" placeholder="Buscar cliente..." style="display:none;" />
+      </div>
+      <select id="seleccionarClientes" class="clientes-select" multiple size="6" style="display:none;">
+        {% for c in clientes %}
+          <option value="{{ c.id_cliente }}" data-telefono="{{ (c.telefono or '')|replace(' ', '') }}" data-email="{{ c.email or '' }}">{{ c.nombre }} {{ c.apellido }}</option>
+        {% endfor %}
+      </select>
+      <div class="clientes-actions">
+        <button class="btn-guardar" onclick="sendPromosWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+        <button class="btn-guardar" style="background:#3b82f6" onclick="sendPromosEmail()"><i class="fas fa-envelope"></i> Correo</button>
+        <a href="{{ url_for('obtener_productos') }}" class="btn-cancelar">Ir a producto</a>
+      </div>
+    </div>
+    <div id="promosList" class="productos-grid promos-anim">
+      {% for p in promociones %}
+      <div class="producto-card promo-item" 
+           data-nombre="{{ p.nombre }}" 
+           data-precio="{{ p.precio_promocional }}" 
+           data-frase="{{ p.frase or '' }}" 
+           data-foto-url="{{ (p.incluir_foto and p.foto) and url_for('static', filename='uploads/' ~ p.foto) or '' }}"
+           data-idprom="{{ p.id_promocion }}">
+        <button class="promo-remove" title="Quitar" data-idprom="{{ p.id_promocion }}">×</button>
+        <div class="producto-foto">
+          {% if p.incluir_foto and p.foto %}
+            <img src="{{ url_for('static', filename='uploads/' ~ p.foto) }}" alt="foto {{ p.nombre }}">
+          {% else %}
+            <div class="sin-foto">No Foto</div>
+          {% endif %}
+        </div>
+        <div class="producto-info">
+          <h3>{{ p.nombre }}</h3>
+          <p class="precio">{{ p.precio_promocional|cop }}</p>
+          <p class="descripcion">{{ p.frase or 'Sin frase' }}</p>
+        </div>
+      </div>
+      {% else %}
+        <p>No hay promociones activas aún.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/currency_cop.js') }}"></script>
+<script>
+const SHARE_BASE = "{{ share_base or '' }}";
+function openModal(id){ document.getElementById(id).style.display='flex'; }
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+function openPromocionar(id, nombre, fotoUrl){
+  const form = document.getElementById('formPromocion');
+  form.action = `/productos/promocionar/${id}`;
+  document.getElementById('promo-producto-nombre').textContent = nombre;
+  const img = document.getElementById('promo-producto-foto');
+  if (fotoUrl){ img.src=fotoUrl; img.style.display='block'; } else { img.style.display='none'; }
+  openModal('modal-promocionar');
+  if (window.initCopInputs) initCopInputs();
+}
+
+function openPromocionesModal(){
+  const chk = document.getElementById('enviarATodos');
+  const sel = document.getElementById('seleccionarClientes');
+  sel.style.display = chk.checked ? 'none' : 'block';
+  document.getElementById('buscarCliente').style.display = chk.checked ? 'none' : 'block';
+  openModal('modal-promociones');
+}
+
+function togglePromosPanel(){
+  const list = document.getElementById('promosList');
+  const chev = document.querySelector('#modal-promociones .promo-header .chevron');
+  const collapsed = list.classList.toggle('promos-collapsed');
+  if (chev){ chev.textContent = collapsed ? '▼' : '▲'; }
+}
+document.addEventListener('change', function(e){
+  if (e.target && e.target.id === 'enviarATodos'){
+    const sel = document.getElementById('seleccionarClientes');
+    sel.style.display = e.target.checked ? 'none' : 'block';
+    document.getElementById('buscarCliente').style.display = e.target.checked ? 'none' : 'block';
+  }
+});
+
+// Listeners para botones de Promocionar (evita JS inline con Jinja)
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.js-promo-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.getAttribute('data-id'));
+      const nombreAttr = btn.getAttribute('data-nombre');
+      const fotoAttr = btn.getAttribute('data-foto-url');
+      let nombre = '';
+      let fotoUrl = '';
+      try { nombre = nombreAttr ? JSON.parse(nombreAttr) : ''; } catch(e) { nombre = nombreAttr || ''; }
+      try { fotoUrl = fotoAttr ? JSON.parse(fotoAttr) : ''; } catch(e) { fotoUrl = fotoAttr || ''; }
+      openPromocionar(id, nombre, fotoUrl);
+    });
+  });
+
+  // Quitar promoción (ícono X)
+  document.querySelectorAll('.promo-remove').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const idProm = btn.getAttribute('data-idprom');
+      try{
+        const res = await fetch(`/promociones/desactivar/${idProm}`, {method:'POST'});
+        const json = await res.json();
+        if(json.status === 'ok'){
+          const card = btn.closest('.promo-item');
+          card.remove();
+          const remaining = document.querySelectorAll('.promo-item').length;
+          if (remaining === 0){
+            const list = document.getElementById('promosList');
+            const p = document.createElement('p');
+            p.textContent = 'No hay promociones activas aún.';
+            list.parentElement.appendChild(p);
+          }
+        } else {
+          alert('No se pudo desactivar la promoción: ' + (json.message||''));
+        }
+      }catch(err){
+        alert('Error al desactivar la promoción');
+      }
+    });
+  });
+});
+
+function buildPromoMessage(card){
+  const nombre = card.dataset.nombre;
+  const precio = card.dataset.precio;
+  const frase = card.dataset.frase || '';
+  const idProm = card.dataset.idprom;
+  const origin = SHARE_BASE || window.location.origin;
+  const shareUrl = idProm ? new URL(`/promo/${idProm}`, origin).href : '';
+  let msg = `Promoción: ${nombre}\n${frase}\nPrecio: COP $${Number(precio).toLocaleString('es-CO')}\n`;
+  if (shareUrl){
+    msg += `Ver detalles: ${shareUrl}\n`;
+  }
+  msg += `\n¡Te esperamos en GYM!`;
+  return msg;
+}
+
+function getSelectedClients(){
+  const chkTodos = document.getElementById('enviarATodos').checked;
+  const options = document.querySelectorAll('#seleccionarClientes option');
+  let list = [];
+  if (chkTodos){
+    options.forEach(o=> list.push({tel: (o.dataset.telefono||'').replace(/\D/g,''), email: o.dataset.email||''}));
+  } else {
+    options.forEach(o=>{ if(o.selected) list.push({tel: (o.dataset.telefono||'').replace(/\D/g,''), email: o.dataset.email||''}); });
+  }
+  return list.filter(c => c.tel || c.email);
+}
+
+// Búsqueda de clientes en el selector
+document.addEventListener('input', function(e){
+  if (e.target && e.target.id === 'buscarCliente'){
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#seleccionarClientes option').forEach(opt => {
+      const text = (opt.textContent || '').toLowerCase();
+      opt.hidden = q && !text.includes(q);
+    });
+  }
+});
+
+function sendPromosWhatsApp(){
+  const cards = document.querySelectorAll('.promo-item');
+  const clients = getSelectedClients();
+  if (clients.length === 0){ alert('No hay clientes seleccionados o registrados.'); return; }
+  cards.forEach(card => {
+    const msg = buildPromoMessage(card);
+    clients.forEach(c => { if (c.tel){ const url = `https://wa.me/${c.tel}?text=${encodeURIComponent(msg)}`; window.open(url,'_blank'); } });
+  });
+}
+
+function sendPromosEmail(){
+  const cards = Array.from(document.querySelectorAll('.promo-item'));
+  if (cards.length === 0){ alert('No hay promociones activas.'); return; }
+  const clients = getSelectedClients();
+  const emails = clients.map(c=>c.email).filter(Boolean);
+  if (emails.length === 0){ alert('No hay correos válidos.'); return; }
+  // Tomar la primera promo para asunto/cuerpo general
+  const msg = buildPromoMessage(cards[0]);
+  const subject = 'Promociones GYM';
+  const url = `mailto:?bcc=${encodeURIComponent(emails.join(','))}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
+  window.location.href = url;
+}
+</script>
+{% endblock %}

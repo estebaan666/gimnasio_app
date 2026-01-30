@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="{{ url_for('static', filename='js/clientes.js') }}" defer></script>
+
+
+<div class="client-container">
+    <!-- Botón superior -->
+    <div class="client-header">
+        <a class="register-button" href="{{ url_for('nuevo_cliente') }}">➕ Registrar Cliente</a>
+    </div>
+
+    <!-- Buscador -->
+    <div class="client-search">
+        <input type="text" id="searchInput" placeholder="🔍 Buscar cliente...">
+    </div>
+
+    <!-- Tarjetas -->
+    <div class="client-cards" id="clientCards">
+        {% for cliente in clientes %}
+        <div class="client-card" data-nombre="{{ cliente.nombre }} {{ cliente.apellido }}">
+            <!-- Foto clickeable con fallback -->
+            <img src="{{ cliente.foto_url if cliente.foto_url else url_for('static', filename='img/default-user.png') }}"
+                 alt="Foto de {{ cliente.nombre }}" class="client-photo js-open-cliente"
+                 data-cliente='{{ cliente|tojson|safe }}'>
+
+            <div class="client-info">
+                <strong>{{ cliente.nombre }} {{ cliente.apellido }}</strong>
+                <small>📛 Membresía: {{ cliente.tipo_membresia or 'N/A' }}</small>
+                <small>📅 Próximo pago: {{ cliente.proximo_pago or 'N/D' }}</small>
+                <small>💳 Estado de pago: {{ cliente.estado_pago }}</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal de detalles -->
+<div id="clientModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    
+    <div class="modal-body">
+      <!-- FOTO DEL CLIENTE con fallback -->
+      <div class="modal-photo">
+        <img id="modalFoto" src="{{ url_for('static', filename='img/default-user.png') }}" alt="Foto del cliente">
+      </div>
+
+      <!-- INFO DEL CLIENTE -->
+      <div class="modal-info">
+        <h2 id="modalNombre"></h2>
+        <p><strong>Identificación:</strong> <span id="modalIdentificacion"></span></p>
+        <p><strong>Género:</strong> <span id="modalGenero"></span></p>
+        <p><strong>Membresía:</strong> <span id="modalMembresia"></span></p>
+        <p><strong>Próximo pago:</strong> <span id="modalProximoPago"></span></p>
+        <p><strong>Estado de pago:</strong> <span id="modalEstadoPago"></span></p>
+        <p><strong>Fecha de nacimiento:</strong> <span id="modalNacimiento"></span></p>
+        <p><strong>Teléfono:</strong> <span id="modalTelefono"></span></p>
+        <p><strong>Email:</strong> <span id="modalEmail"></span></p>
+        <p><strong>Dirección:</strong> <span id="modalDireccion"></span></p>
+        <p><strong>Enfermedades:</strong> <span id="modalEnfermedades"></span></p>
+        <p><strong>Alergias:</strong> <span id="modalAlergias"></span></p>
+        <p><strong>Fracturas:</strong> <span id="modalFracturas"></span></p>
+        <p><strong>Observaciones médicas:</strong> <span id="modalObservaciones"></span></p>
+
+        <!-- Toggle de Medidas corporales para no saturar el modal -->
+        <button type="button" class="modal-btn" id="toggleMedidas" style="margin-top:8px;">📏 Medidas corporales</button>
+        <div id="medidasBox" style="display:none; margin-top:10px;">
+          <p><strong>Peso (kg):</strong> <span id="mPeso"></span></p>
+          <p><strong>Altura (cm):</strong> <span id="mAltura"></span></p>
+          <p><strong>IMC:</strong> <span id="mImc"></span></p>
+          <p><strong>Cintura (cm):</strong> <span id="mCintura"></span></p>
+          <p><strong>Pecho (cm):</strong> <span id="mPecho"></span></p>
+          <p><strong>Brazo (cm):</strong> <span id="mBrazo"></span></p>
+          <p><strong>Pierna (cm):</strong> <span id="mPierna"></span></p>
+          <p><strong>Observaciones (medidas):</strong> <span id="mObsMedidas"></span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="modal-actions">
+      <button class="modal-btn close-btn" onclick="closeModal()">❌ Cerrar</button>
+      <button class="modal-btn edit-btn" onclick="editClient()">✏️ Editar</button>
+      <button class="modal-btn delete-btn" onclick="deleteClient()">🗑️ Eliminar</button>
+</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const toggleBtn = document.getElementById('toggleMedidas');
+    const medidasBox = document.getElementById('medidasBox');
+
+    if (toggleBtn && medidasBox){
+      toggleBtn.addEventListener('click', function(){
+        const visible = medidasBox.style.display === 'block';
+        medidasBox.style.display = visible ? 'none' : 'block';
+      });
+    }
+
+    const originalShowDetails = window.showDetails;
+    window.showDetails = function(cliente){
+      try { originalShowDetails(cliente); } catch(e) { console.error(e); }
+
+      const medidas = cliente.medidas || {};
+      setText('mPeso', fmt(medidas.peso));
+      setText('mAltura', fmt(medidas.altura));
+      setText('mImc', fmt(medidas.imc));
+      setText('mCintura', fmt(medidas.cintura));
+      setText('mPecho', fmt(medidas.pecho));
+      setText('mBrazo', fmt(medidas.brazo));
+      setText('mPierna', fmt(medidas.pierna));
+      setText('mObsMedidas', medidas.observaciones || 'N/D');
+
+      if (medidasBox) medidasBox.style.display = 'none';
+    };
+
+    function fmt(v){
+      const n = parseFloat(v);
+      return (!isNaN(n)) ? n.toFixed(2) : (v ? String(v) : 'N/D');
+    }
+    function setText(id, val){
+      const el = document.getElementById(id);
+      if (el) el.textContent = val ?? 'N/D';
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar Cliente</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Editar Cliente</h2>
+    <form action="{{ url_for('editar_cliente', id=cliente.id_cliente) }}" method="POST" enctype="multipart/form-data">
+      <input type="text" name="nombre" value="{{ cliente.nombre }}" placeholder="Nombre" required>
+      <input type="text" name="apellido" value="{{ cliente.apellido }}" placeholder="Apellido" required>
+      <input type="text" name="identificacion" value="{{ cliente.identificacion }}" placeholder="Identificación">
+      <select name="genero">
+        <option value="Masculino" {% if cliente.genero == 'Masculino' %}selected{% endif %}>Masculino</option>
+        <option value="Femenino" {% if cliente.genero == 'Femenino' %}selected{% endif %}>Femenino</option>
+        <option value="Otro" {% if cliente.genero == 'Otro' %}selected{% endif %}>Otro</option>
+      </select>
+      <label>Fecha de nacimiento:</label>
+      <input type="date" name="fecha_nacimiento" value="{{ cliente.fecha_nacimiento }}">
+      <input type="tel" name="telefono" value="{{ cliente.telefono }}" placeholder="Teléfono">
+      <input type="email" name="email" value="{{ cliente.email }}" placeholder="Email">
+      <input type="text" name="direccion" value="{{ cliente.direccion }}" placeholder="Dirección">
+
+      {% if cliente.foto %}
+        <label>Foto actual:</label>
+        <img src="{{ url_for('static', filename='uploads/' ~ cliente.foto) }}" width="100">
+      {% endif %}
+      <label>Nueva foto:</label>
+      <input type="file" name="foto" accept="image/*">
+
+      <textarea name="enfermedades" placeholder="Enfermedades">{{ cliente.enfermedades }}</textarea>
+      <textarea name="alergias" placeholder="Alergias">{{ cliente.alergias }}</textarea>
+      <textarea name="fracturas" placeholder="Fracturas">{{ cliente.fracturas }}</textarea>
+      <textarea name="observaciones_medicas" placeholder="Observaciones Médicas">{{ cliente.observaciones_medicas }}</textarea>
+
+      <button type="submit">Actualizar Cliente</button>
+    </form>
+
+    <form action="{{ url_for('eliminar_cliente', id=cliente.id_cliente) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este cliente?');">
+      <button type="submit" class="btn-delete">Eliminar Cliente</button>
+    </form>
+
+    <a href="{{ url_for('index') }}" class="back-button">Volver al inicio</a>
+  </div>
+</body>
+</html>

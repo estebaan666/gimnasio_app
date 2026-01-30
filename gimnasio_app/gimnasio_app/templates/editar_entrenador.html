@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar Entrenador</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Editar Entrenador</h2>
+    <form action="{{ url_for('editar_entrenador', id=entrenador.id_entrenador) }}" method="POST">
+      <input type="text" name="nombre" placeholder="Nombre" value="{{ entrenador.nombre }}" required>
+      <input type="text" name="apellido" placeholder="Apellido" value="{{ entrenador.apellido }}" required>
+      <input type="text" name="especialidad" placeholder="Especialidad" value="{{ entrenador.especialidad }}" required>
+      <input type="email" name="email" placeholder="Email" value="{{ entrenador.email }}" required>
+      <input type="tel" name="telefono" placeholder="Teléfono" value="{{ entrenador.telefono }}">
+
+      <button type="submit">Actualizar Entrenador</button>
+    </form>
+    <a href="{{ url_for('obtener_entrenadores') }}" class="back-button">Volver</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2>Asignar clase a {{ entrenador.nombre }} {{ entrenador.apellido }}</h2>
+      <p class="text-light">Crea una sesión y, opcionalmente, un plan semanal con ejercicios editables.</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <a href="{{ url_for('obtener_entrenadores') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-10 mx-auto">
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+          <i class="fas fa-calendar-plus me-2"></i>Crear sesión (clase) individual
+        </div>
+        <div class="card-body">
+          <form action="{{ url_for('asignar_clase_entrenador', id_entrenador=entrenador.id_entrenador) }}" method="POST">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                <select class="form-select" name="id_cliente" required>
+                  <option value="">Seleccione un cliente</option>
+                  {% for c in clientes %}
+                  <option value="{{ c.id_cliente }}">{{ c.nombre }} {{ c.apellido }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre de la clase</label>
+                <input class="form-control" name="nombre_clase" placeholder="Sesión con {{ entrenador.nombre }}">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Fecha y hora <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" name="fecha_hora" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Duración (minutos) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" name="duracion" min="15" max="180" value="60" required>
+              </div>
+            </div>
+
+            <div class="text-end">
+              <button class="btn btn-info" type="submit">
+                <i class="fas fa-check me-2"></i>Asignar clase e inscribir
+              </button>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <i class="fas fa-list-check me-2"></i>Plan semanal (opcional)
+              </div>
+              <div class="card-body">
+                <p class="text-light mb-3">Define horarios y ejercicios de lunes a viernes (predeterminados y editables).</p>
+
+                <!-- Campos de cabecera del plan -->
+                <div class="row g-3 mb-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Fecha inicio</label>
+                    <input type="date" class="form-control" name="fecha_inicio" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Título</label>
+                    <input class="form-control" name="titulo_rutina" placeholder="Plan semanal" />
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label">Descripción</label>
+                    <input class="form-control" name="descripcion_rutina" placeholder="Rutina generada desde Entrenadores" />
+                  </div>
+                </div>
+
+                {% set dias = ["Lunes","Martes","Miercoles","Jueves","Viernes"] %}
+                {% set opciones = {
+                  'Lunes': [
+                    'Pecho: Press banca 4x12',
+                    'Aperturas con mancuernas 3x15',
+                    'Fondos 3x10',
+                    'Cardio 20m'
+                  ],
+                  'Martes': [
+                    'Espalda: Dominadas 4x8',
+                    'Remo con barra 4x10',
+                    'Peso muerto 3x8',
+                    'Core 3x15'
+                  ],
+                  'Miercoles': [
+                    'Piernas: Sentadillas 4x10',
+                    'Prensa 4x12',
+                    'Zancadas 3x12',
+                    'Estiramientos 10m'
+                  ],
+                  'Jueves': [
+                    'Hombros: Press militar 4x10',
+                    'Elevaciones laterales 3x15',
+                    'Facepull 3x12',
+                    'Cardio 15m'
+                  ],
+                  'Viernes': [
+                    'Full body 3x12',
+                    'Abdominales 3x20',
+                    'Circuito funcional',
+                    'Cardio suave 15m'
+                  ]
+                } %}
+                {% set defaults = {
+                  'Lunes': 'Pecho: Press banca 4x12, Aperturas 3x12; Cardio 15m',
+                  'Martes': 'Espalda: Dominadas 4x8, Remo 4x10; Core 10m',
+                  'Miercoles': 'Piernas: Sentadillas 4x10, Prensa 4x12; Estiramientos 10m',
+                  'Jueves': 'Hombros: Press militar 4x10, Elevaciones 3x12; Cardio 20m',
+                  'Viernes': 'Full body: Circuito 5 estaciones; Core 10m'
+                } %}
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">Fecha inicio</label>
+                    <input type="date" class="form-control" name="fecha_inicio">
+                  </div>
+                  <div class="col-md-8 mb-3">
+                    <label class="form-label">Título y descripción</label>
+                    <div class="input-group">
+                      <input class="form-control" name="titulo_rutina" placeholder="Plan semanal">
+                      <input class="form-control" name="descripcion_rutina" placeholder="Rutina generada desde Entrenadores">
+                    </div>
+                  </div>
+                </div>
+
+                <style>
+                  .exercise-chip{display:inline-flex;gap:.4rem;align-items:center;background:rgba(14,165,233,.18);border:1px solid rgba(14,165,233,.35);color:#fff;padding:.25rem .6rem;border-radius:999px;font-size:.85rem;margin:.2rem .3rem;}
+                  .exercise-chip .remove{cursor:pointer}
+                  .dropdown-menu{min-width:22rem}
+                </style>
+
+                <div class="accordion" id="planAccordion">
+                  {% for dia in ['Lunes','Martes','Miercoles','Jueves','Viernes'] %}
+                  <div class="accordion-item bg-dark text-light">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#pane{{ dia }}" aria-expanded="false" aria-controls="pane{{ dia }}">
+                        {{ dia }}
+                      </button>
+                    </h2>
+                    <div id="pane{{ dia }}" class="accordion-collapse collapse" data-bs-parent="#planAccordion">
+                      <div class="accordion-body">
+                        <div class="row g-3 align-items-center">
+                          <div class="col-md-3">
+                            <label class="form-label">Hora</label>
+                            <input type="time" class="form-control" name="hora_{{ dia }}">
+                          </div>
+                          <div class="col-md-9">
+                            <label class="form-label">Ejercicios</label>
+                            <div class="dropdown">
+                              <button class="btn btn-outline-light dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Elegir ejercicios
+                              </button>
+                              <div class="dropdown-menu p-3">
+                                {% for op in opciones[dia] %}
+                                  <div class="form-check">
+                                    <input class="form-check-input ej-check" type="checkbox" value="{{ op }}" id="{{ dia }}_{{ loop.index }}" data-dia="{{ dia }}">
+                                    <label class="form-check-label" for="{{ dia }}_{{ loop.index }}">{{ op }}</label>
+                                  </div>
+                                {% endfor %}
+                              </div>
+                            </div>
+                            <div class="mt-2" id="chips_{{ dia }}"></div>
+                            <input class="form-control mt-2" name="ej_{{ dia }}" value="{{ defaults[dia] }}" placeholder="Opcional: texto personalizado" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+
+                <div class="text-end">
+                  <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-save me-2"></i>Guardar con rutina semanal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% block scripts %}
+<script>
+  // Dropdown de ejercicios con chips y combinación al enviar
+  document.addEventListener('DOMContentLoaded', function(){
+    const form = document.querySelector('form[action*="asignar"]');
+    if(!form) return;
+    const dias = ["Lunes","Martes","Miercoles","Jueves","Viernes"];
+
+    form.querySelectorAll('.ej-check').forEach(function(cb){
+      cb.addEventListener('change', function(){
+        const dia = this.dataset.dia;
+        const chips = form.querySelector(`#chips_${dia}`);
+        const val = this.value;
+        if(this.checked){
+          const chip = document.createElement('span');
+          chip.className = 'exercise-chip';
+          chip.dataset.value = val;
+          chip.innerHTML = `${val} <span class="remove">×</span>`;
+          chip.querySelector('.remove').addEventListener('click', function(){
+            cb.checked = false;
+            chip.remove();
+          });
+          chips.appendChild(chip);
+        } else {
+          chips.querySelectorAll('.exercise-chip').forEach(function(el){
+            if(el.dataset.value === val) el.remove();
+          });
+        }
+      });
+    });
+
+    form.addEventListener('submit', function(){
+      dias.forEach(function(d){
+        const checks = Array.from(form.querySelectorAll(`input.ej-check[data-dia="${d}"]:checked`)).map(i=>i.value);
+        const input = form.querySelector(`input[name="ej_${d}"]`);
+        if(input && checks.length){
+          const combined = checks.join(' + ');
+          input.value = input.value ? (combined + ' + ' + input.value) : combined;
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}

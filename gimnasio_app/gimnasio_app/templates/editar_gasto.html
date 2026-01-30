@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Editar Gasto</h2>
+    <form action="{{ url_for('editar_gasto', id=gasto.id_gasto) }}" method="POST" class="card p-4 shadow-lg border-0 rounded-3 bg-light">
+        
+        <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <input type="text" class="form-control" name="descripcion" value="{{ gasto.descripcion }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Monto (COP)</label>
+            <input type="text" class="form-control money-input" name="monto" value="{{ gasto.monto }}" placeholder="COP $0" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Fecha</label>
+            <input type="date" class="form-control" name="fecha" value="{{ gasto.fecha }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Categoría</label>
+            <select class="form-select" name="categoria" required>
+                <option value="mantenimiento" {% if gasto.categoria == 'mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+                <option value="servicios" {% if gasto.categoria == 'servicios' %}selected{% endif %}>Servicios</option>
+                <option value="equipos" {% if gasto.categoria == 'equipos' %}selected{% endif %}>Equipos</option>
+                <option value="otros" {% if gasto.categoria == 'otros' %}selected{% endif %}>Otros</option>
+            </select>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('finanzas') }}" class="btn btn-secondary">Volver</a>
+            <button type="submit" class="btn btn-primary">Actualizar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/currency_cop.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    initCopInputs();
+  });
+</script>
+{% endblock %}

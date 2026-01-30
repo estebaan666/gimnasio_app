@@ -1,0 +1,93 @@
+{% set gym = data.gym %}
+{% set cfg = data.cfg %}
+{% set comp = data.comp %}
+{% set detalle = data.detalle %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ cfg.nombre_comprobante }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/comprobantes.css') }}">
+</head>
+<body>
+  <div class="wrap">
+    <div style="padding:12px 28px">
+      <a href="{{ request.args.get('back') or url_for('listar_comprobantes') }}" class="btn btn-secondary">Volver</a>
+    </div>
+    <div class="head">
+      <div class="head-left">
+        {% if cfg.logo_url or gym.logo_url %}
+        <img class="gym-logo" src="{{ cfg.logo_url or gym.logo_url }}" alt="logo">
+        {% endif %}
+        <div class="gym-name">{{ gym.nombre }}</div>
+        <div class="gym-info">
+          {{ gym.direccion }}<br>{{ gym.ciudad }}<br>{{ gym.telefono }}<br>{{ gym.correo }}
+        </div>
+      </div>
+      <div class="head-right">
+        <div class="title">{{ cfg.nombre_comprobante }}</div>
+        <div class="meta">
+          <div><b>{{ comp.numero }}</b></div>
+          <div>{{ comp.fecha }}</div>
+          <div>{{ 'GIM-' ~ '%04d'|format(comp.id_gimnasio) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Datos del cliente</h3>
+      <div class="kv">
+        <div>Nombre</div><div>{{ comp.nombre_cliente }}</div>
+        <div>Documento</div><div>{{ comp.documento_cliente }}</div>
+        <div>Correo</div><div>{{ comp.correo_cliente }}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Detalle de la transacción</h3>
+      <table class="table">
+        <thead><tr><th>Cant.</th><th>Descripción</th><th>Precio unitario</th><th>Total</th></tr></thead>
+        <tbody>
+        {% for d in detalle %}
+          <tr>
+            <td>{{ d.cantidad }}</td>
+            <td>{{ d.descripcion }}</td>
+            <td>{{ d.precio_unitario|cop }}</td>
+            <td>{{ d.total|cop }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="totals">
+      <div></div>
+      <div class="box">
+        <div class="row"><span>Subtotal</span><b>{{ comp.subtotal|cop }}</b></div>
+        <div class="row"><span>Descuento</span><b>{{ comp.descuento|cop }}</b></div>
+        <div class="row"><span>Método de pago</span><b>{{ comp.metodo_pago }}</b></div>
+        <div class="row"><span>Total pagado</span><b>{{ comp.total_pagado|cop }}</b></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Información de control</h3>
+      <div class="kv">
+        <div>Nombre del vendedor</div><div>{{ comp.id_vendedor }}</div>
+        <div>Código de transacción</div><div>{{ comp.codigo_transaccion }}</div>
+      </div>
+      {% if cfg.mostrar_qr and comp.qr_url %}
+      <div style="display:flex; justify-content:flex-end; padding-top:10px;">
+        <img class="qr" src="/{{ comp.qr_url }}" alt="QR">
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="footer">
+      <div style="font-weight:700; font-size:18px; margin-bottom:6px;">Gracias por preferirnos</div>
+      <div>{{ cfg.texto_pie }}</div>
+    </div>
+  </div>
+</body>
+</html>

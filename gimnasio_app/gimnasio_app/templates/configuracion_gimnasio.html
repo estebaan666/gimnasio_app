@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/finanzas.css') }}">
+<div class="cfg-gym-wrap">
+  <h2>Configuración del Gimnasio</h2>
+  <form method="post" class="cfg-form">
+    <div class="grid">
+      <label>Nombre<input name="nombre" value="{{ gym.nombre }}" required></label>
+      <label>NIT<input name="nit" value="{{ gym.nit }}" required></label>
+      <label>Dirección<input name="direccion" value="{{ gym.direccion }}" required></label>
+      <label>Teléfono<input name="telefono" value="{{ gym.telefono }}" required></label>
+      <label>Ciudad<input name="ciudad" value="{{ gym.ciudad }}" required></label>
+      <label>Correo<input name="correo" type="email" value="{{ gym.correo }}" required></label>
+      <label>Logo (URL)<input name="logo" value="{{ gym.logo }}"></label>
+      <label style="grid-column:1/-1">Texto legal<textarea name="texto_legal">{{ gym.texto_legal }}</textarea></label>
+      <label>Consecutivo<input name="consecutivo_comprobante" type="number" value="{{ gym.consecutivo_comprobante }}" min="0"></label>
+    </div>
+    <div class="actions"><button class="btn" type="submit">Guardar</button></div>
+  </form>
+</div>
+{% endblock %}

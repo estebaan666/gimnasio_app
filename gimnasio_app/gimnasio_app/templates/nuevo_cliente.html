@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nuevo_cliente.css') }}">
+
+<div class="form-container">
+  <h2>➕ Nuevo Cliente</h2>
+  <form action="{{ url_for('nuevo_cliente') }}" method="POST" enctype="multipart/form-data">
+    <label>Nombre:</label>
+    <input type="text" name="nombre" placeholder="Nombre" required>
+
+    <label>Apellido:</label>
+    <input type="text" name="apellido" placeholder="Apellido" required>
+
+    <label>Identificación:</label>
+    <input type="text" name="identificacion" placeholder="Identificación" required>
+
+    <label>Género:</label>
+    <select name="genero" required>
+      <option value="" disabled selected>Seleccione género</option>
+      <option value="Masculino">Masculino</option>
+      <option value="Femenino">Femenino</option>
+      <option value="Otro">Otro</option>
+    </select>
+
+    <label>Fecha de nacimiento:</label>
+    <input type="date" name="fecha_nacimiento">
+
+    <label>Teléfono:</label>
+    <input type="tel" name="telefono" placeholder="Teléfono">
+
+    <!-- Botón colapsable para Medidas corporales -->
+    <button type="button" id="toggleMedidas" class="back-button" style="margin-bottom:1rem;">📏 Medidas corporales</button>
+    <div id="medidasBox" style="display:none; margin-top:10px;">
+      <label>Peso (kg):</label>
+      <input type="number" step="0.01" name="peso" placeholder="Ej: 72.50">
+
+      <label>Altura (cm):</label>
+      <input type="number" step="0.1" name="altura" id="alturaInput" placeholder="Ej: 175">
+
+      <label>IMC:</label>
+      <input type="number" step="0.01" name="imc" id="imcInput" placeholder="Se calcula automáticamente" readonly>
+
+      <label>Cintura (cm):</label>
+      <input type="number" step="0.1" name="cintura" placeholder="Ej: 82.5">
+
+      <label>Pecho (cm):</label>
+      <input type="number" step="0.1" name="pecho" placeholder="Ej: 100.0">
+
+      <label>Brazo (cm):</label>
+      <input type="number" step="0.1" name="brazo" placeholder="Ej: 34.5">
+
+      <label>Pierna (cm):</label>
+      <input type="number" step="0.1" name="pierna" placeholder="Ej: 55.0">
+
+      <label>Observaciones (opcional):</label>
+      <textarea name="observaciones_medidas" placeholder="Notas sobre la medición"></textarea>
+    </div>
+
+    <label>Foto:</label>
+    <input type="file" name="foto" accept="image/*">
+
+    <label>Enfermedades:</label>
+    <textarea name="enfermedades" placeholder="Enfermedades"></textarea>
+
+    <label>Alergias:</label>
+    <textarea name="alergias" placeholder="Alergias"></textarea>
+
+    <label>Fracturas:</label>
+    <textarea name="fracturas" placeholder="Fracturas"></textarea>
+
+    <label>Observaciones Médicas:</label>
+    <textarea name="observaciones_medicas" placeholder="Observaciones Médicas"></textarea>
+
+    <button type="submit">Guardar Cliente</button>
+  </form>
+  <a href="{{ url_for('obtener_clientes') }}" class="back-button">⬅ Volver</a>
+</div>
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const btn = document.getElementById('toggleMedidas');
+    const box = document.getElementById('medidasBox');
+    const pesoInput = document.querySelector('input[name="peso"]');
+    const alturaInput = document.getElementById('alturaInput');
+    const imcInput = document.getElementById('imcInput');
+
+    btn.addEventListener('click', function(){
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    });
+
+    function calcIMC(){
+      const peso = parseFloat(pesoInput.value);
+      const alturaCm = parseFloat(alturaInput.value);
+      if (!isNaN(peso) && !isNaN(alturaCm) && alturaCm > 0){
+        const alturaM = alturaCm / 100.0;
+        const imc = peso / (alturaM * alturaM);
+        imcInput.value = imc.toFixed(2);
+      } else {
+        imcInput.value = '';
+      }
+    }
+    pesoInput.addEventListener('input', calcIMC);
+    alturaInput.addEventListener('input', calcIMC);
+  });
+</script>
+{% endblock %}
+{% endblock %}
