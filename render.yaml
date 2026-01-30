@@ -1,12 +1,9 @@
 services:
   - type: web
-    name: gimnasio-app
+    name: gimnasio_app
     env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: gunicorn app:app
     plan: free
     branch: master
     repo: https://github.com/estebaan666/gimnasio_app
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --chdir gimnasio_app/gimnasio_app app:app
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.10.0
