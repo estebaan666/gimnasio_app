@@ -939,8 +939,7 @@ def obtener_clientes():
         return render_template('clientes.html', clientes=clientes)
 
     except Exception as e:
-        flash(f"Error al cargar clientes: {e}", "danger")
-        return redirect(url_for('index'))
+        return jsonify({"error": str(e)}), 500
     finally:
         if conn:
             conn.close()
@@ -1025,8 +1024,7 @@ def nuevo_cliente():
             flash("âœ… Cliente registrado exitosamente", "success")
             return redirect(url_for('obtener_clientes'))   # <--- IMPORTANTE
         except Exception as e:
-            flash(f"âŒ Error al registrar cliente: {e}", "danger")
-            return redirect(url_for('nuevo_cliente'))
+            return jsonify({"error": str(e)}), 500
         finally:
             conn.close()
 
@@ -1058,8 +1056,7 @@ def editar_cliente(id):
                 cliente = cursor.fetchone()
                 return render_template('editar_cliente.html', cliente=cliente)
     except Exception as e:
-        flash(f"Error al editar cliente: {e}", "danger")
-        return redirect(url_for('obtener_clientes'))
+        return jsonify({"error": str(e)}), 500
     finally:
         if conn: conn.close()
 
@@ -1074,8 +1071,7 @@ def eliminar_cliente(id):
             flash("Cliente eliminado con Ã©xito", "success")
             return redirect(url_for('obtener_clientes'))
     except Exception as e:
-        flash(f"Error al eliminar cliente: {e}", "danger")
-        return redirect(url_for('obtener_clientes'))
+        return jsonify({"error": str(e)}), 500
     finally:
         if conn: conn.close()
 # -------- finanza --------
@@ -1092,8 +1088,7 @@ def obtener_entrenadores():
             entrenadores = cursor.fetchall()
         return render_template('entrenadores.html', entrenadores=entrenadores)
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('index'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -1116,8 +1111,7 @@ def nuevo_entrenador():
                 flash("Entrenador agregado con Ã©xito", "success")
                 return redirect(url_for('obtener_entrenadores'))
         except Exception as e:
-            flash(f"Error: {e}", "danger")
-            return render_template('nuevo_entrenador.html')
+            return jsonify({"error": str(e)}), 500
         finally:
             conn.close()
     return render_template('nuevo_entrenador.html')
@@ -1142,8 +1136,7 @@ def editar_entrenador(id):
             entrenador = cursor.fetchone()
             return render_template('editar_entrenador.html', entrenador=entrenador)
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('obtener_entrenadores'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -1157,8 +1150,7 @@ def eliminar_entrenador(id):
             flash("Entrenador eliminado con Ã©xito", "success")
             return redirect(url_for('obtener_entrenadores'))
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('obtener_entrenadores'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -1238,8 +1230,7 @@ def asignar_clase_entrenador(id_entrenador):
             }
             return render_template('asignar_clase_entrenador.html', entrenador=entrenador, clientes=clientes, defaults=defaults)
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('obtener_entrenadores'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 # -------- RUTAS PARA CLASES --------
@@ -1259,8 +1250,7 @@ def obtener_clases():
             entrenadores = cursor.fetchall()
         return render_template('clases.html', clases=clases, entrenadores=entrenadores)
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('index'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -1281,8 +1271,7 @@ def nueva_clase():
                 flash("Clase agregada con Ã©xito","success")
                 return redirect(url_for('obtener_clases'))
         except Exception as e:
-            flash(f"Error: {e}","danger")
-            return redirect(url_for('obtener_clases'))
+            return jsonify({"error": str(e)}), 500
         finally:
             conn.close()
     conn = obtener_conexion()
@@ -1314,8 +1303,7 @@ def editar_clase(id):
             entrenadores = cursor.fetchall()
         return render_template('editar_clase.html',clase=clase,entrenadores=entrenadores)
     except Exception as e:
-        flash(f"Error: {e}","danger")
-        return redirect(url_for('obtener_clases'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -1329,8 +1317,7 @@ def eliminar_clase(id):
             flash("Clase eliminada con Ã©xito","success")
             return redirect(url_for('obtener_clases'))
     except Exception as e:
-        flash(f"Error: {e}","danger")
-        return redirect(url_for('obtener_clases'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
         
@@ -1555,8 +1542,7 @@ def promo_share(id_promocion):
         title = f"PromociÃ³n: {promo['nombre']}"
         return render_template('promo_share.html', promo=promo, image_url=image_url, title=title)
     except Exception as e:
-        flash(f"Error al generar pÃ¡gina de promociÃ³n: {e}", "danger")
-        return redirect(url_for('obtener_productos'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -1716,8 +1702,7 @@ def descargar_backup():
         # Enviar como archivo descargable
         return send_file(zip_path, as_attachment=True, download_name=os.path.basename(zip_path), mimetype='application/zip')
     except Exception as e:
-        flash(f"Error al generar backup: {e}", "danger")
-        return redirect(url_for('index'))
+        return jsonify({"error": str(e)}), 500
 
 
 # =================== GASTOS MANUALES ===================
@@ -1824,8 +1809,7 @@ def obtener_inscripciones():
             clases = cursor.fetchall()
         return render_template('inscripciones.html', inscripciones=inscripciones, clientes=clientes, clases=clases)
     except Exception as e:
-        flash(f"Error: {e}","danger")
-        return redirect(url_for('index'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -1843,8 +1827,7 @@ def nueva_inscripcion():
                 flash("InscripciÃ³n realizada con Ã©xito","success")
                 return redirect(url_for('obtener_inscripciones'))
         except Exception as e:
-            flash(f"Error: {e}","danger")
-            return redirect(url_for('obtener_inscripciones'))
+            return jsonify({"error": str(e)}), 500
         finally:
             conn.close()
     conn = obtener_conexion()
@@ -1866,8 +1849,7 @@ def eliminar_inscripcion(id):
             flash("InscripciÃ³n eliminada con Ã©xito","success")
             return redirect(url_for('obtener_inscripciones'))
     except Exception as e:
-        flash(f"Error: {e}","danger")
-        return redirect(url_for('obtener_inscripciones'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -1904,8 +1886,7 @@ def obtener_membresias():
         hoy = date.today()
         return render_template('membresias.html', membresias=membresias, hoy=hoy)
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('index'))
+        return jsonify({"error": str(e)}), 500
     finally:
         if conn: conn.close()
 
@@ -2044,8 +2025,7 @@ def nueva_membresia():
 
         return render_template('nueva_membresia.html', clientes=clientes, tipos=tipos)
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('obtener_membresias'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -2094,8 +2074,7 @@ def eliminar_membresia(id):
         flash("MembresÃ­a eliminada con Ã©xito", "success")
         return redirect(url_for('obtener_membresias'))
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('obtener_membresias'))
+        return jsonify({"error": str(e)}), 500
     finally:
         if conn: conn.close()
 
@@ -2137,8 +2116,7 @@ def obtener_pagos():
 
         return render_template('pagos.html', pagos=pagos, clientes=clientes, membresias=membresias)
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('index'))
+        return jsonify({"error": str(e)}), 500
     finally:
         if conn: conn.close()
 
@@ -2197,8 +2175,7 @@ def nuevo_pago():
                 flash("Pago registrado con Ã©xito âœ…", "success")
                 return redirect(url_for('obtener_pagos'))
         except Exception as e:
-            flash(f"Error: {e}", "danger")
-            return redirect(url_for('obtener_pagos'))
+            return jsonify({"error": str(e)}), 500
         finally:
             if conn: conn.close()
 
@@ -2234,8 +2211,7 @@ def eliminar_pago(id):
             flash("Pago eliminado con Ã©xito", "success")
             return redirect(url_for('obtener_pagos'))
     except Exception as e:
-        flash(f"Error: {e}", "danger")
-        return redirect(url_for('obtener_pagos'))
+        return jsonify({"error": str(e)}), 500
     finally:
         if conn: conn.close()
 
@@ -2495,95 +2471,110 @@ def proximas_membresias_vencer():
 # -------- RUTAS PARA LOGIN, REGISTRO Y RECUPERACIÃ“N --------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        usuario = request.form['usuario']
-        password = request.form['password']
-        conn = obtener_conexion()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM usuarios WHERE usuario=%s AND password=%s", (usuario, password))
-                user = cursor.fetchone()
-                if user:
-                    session['usuario'] = usuario
-                    flash('Bienvenido, sesiÃ³n iniciada correctamente', 'success')
-                    return redirect(url_for('index'))
-                else:
-                    flash('Usuario o contraseÃ±a incorrectos', 'danger')
-        finally:
-            conn.close()
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('usuario', None)
-    flash('SesiÃ³n cerrada', 'info')
-    return redirect(url_for('login'))
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        usuario = request.form['usuario']
-        email = request.form['email']
-        password = request.form['password']
-        conn = obtener_conexion()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM usuarios WHERE usuario=%s OR email=%s", (usuario, email))
-                existe = cursor.fetchone()
-                if existe:
-                    flash('El usuario o correo ya existe', 'danger')
-                else:
-                    cursor.execute("INSERT INTO usuarios (usuario, email, password) VALUES (%s, %s, %s)", (usuario, email, password))
-                    conn.commit()
-                    flash('Cuenta creada correctamente, ahora puedes iniciar sesiÃ³n', 'success')
-                    return redirect(url_for('login'))
-        finally:
-            conn.close()
-    return render_template('register.html')
-
-@app.route('/forgot', methods=['GET', 'POST'])
-def forgot():
-    if request.method == 'POST':
-        email = request.form['email']
-        conn = obtener_conexion()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM usuarios WHERE email=%s", (email,))
-                user = cursor.fetchone()
-                if user:
-                    # Simula envÃ­o de correo con cÃ³digo temporal
-                    temp_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-                    session['reset_email'] = email
-                    session['reset_code'] = temp_code
-                    flash(f'Se ha enviado un cÃ³digo de recuperaciÃ³n a tu correo: {temp_code}', 'info')
-                    return redirect(url_for('reset_password'))
-                else:
-                    flash('Correo no encontrado', 'danger')
-        finally:
-            conn.close()
-    return render_template('forgot.html')
-
-@app.route('/reset_password', methods=['GET', 'POST'])
-def reset_password():
-    if request.method == 'POST':
-        code = request.form['code']
-        password = request.form['password']
-        if code == session.get('reset_code'):
-            email = session.get('reset_email')
+    try:
+        if request.method == 'POST':
+            usuario = request.form['usuario']
+            password = request.form['password']
             conn = obtener_conexion()
             try:
                 with conn.cursor() as cursor:
-                    cursor.execute("UPDATE usuarios SET password=%s WHERE email=%s", (password, email))
-                    conn.commit()
-                    flash('ContraseÃ±a restablecida correctamente', 'success')
-                    session.pop('reset_email', None)
-                    session.pop('reset_code', None)
-                    return redirect(url_for('login'))
+                    cursor.execute("SELECT * FROM usuarios WHERE usuario=%s AND password=%s", (usuario, password))
+                    user = cursor.fetchone()
+                    if user:
+                        session['usuario'] = usuario
+                        flash('Bienvenido, sesión iniciada correctamente', 'success')
+                        return redirect(url_for('index'))
+                    else:
+                        flash('Usuario o contraseña incorrectos', 'danger')
             finally:
                 conn.close()
-        else:
-            flash('CÃ³digo incorrecto', 'danger')
-    return render_template('reset_password.html')
+        return render_template('login.html')
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/logout')
+def logout():
+    try:
+        session.pop('usuario', None)
+        flash('Sesión cerrada', 'info')
+        return redirect(url_for('login'))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    try:
+        if request.method == 'POST':
+            usuario = request.form['usuario']
+            email = request.form['email']
+            password = request.form['password']
+            conn = obtener_conexion()
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT * FROM usuarios WHERE usuario=%s OR email=%s", (usuario, email))
+                    existe = cursor.fetchone()
+                    if existe:
+                        flash('El usuario o correo ya existe', 'danger')
+                    else:
+                        cursor.execute("INSERT INTO usuarios (usuario, email, password) VALUES (%s, %s, %s)", (usuario, email, password))
+                        conn.commit()
+                        flash('Cuenta creada correctamente, ahora puedes iniciar sesión', 'success')
+                        return redirect(url_for('login'))
+            finally:
+                conn.close()
+        return render_template('register.html')
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/forgot', methods=['GET', 'POST'])
+def forgot():
+    try:
+        if request.method == 'POST':
+            email = request.form['email']
+            conn = obtener_conexion()
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT * FROM usuarios WHERE email=%s", (email,))
+                    user = cursor.fetchone()
+                    if user:
+                        # Simula envío de correo con código temporal
+                        temp_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                        session['reset_email'] = email
+                        session['reset_code'] = temp_code
+                        flash(f'Se ha enviado un código de recuperación a tu correo: {temp_code}', 'info')
+                        return redirect(url_for('reset_password'))
+                    else:
+                        flash('Correo no encontrado', 'danger')
+            finally:
+                conn.close()
+        return render_template('forgot.html')
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    try:
+        if request.method == 'POST':
+            code = request.form['code']
+            password = request.form['password']
+            if code == session.get('reset_code'):
+                email = session.get('reset_email')
+                conn = obtener_conexion()
+                try:
+                    with conn.cursor() as cursor:
+                        cursor.execute("UPDATE usuarios SET password=%s WHERE email=%s", (password, email))
+                        conn.commit()
+                        flash('Contraseña restablecida correctamente', 'success')
+                        session.pop('reset_email', None)
+                        session.pop('reset_code', None)
+                        return redirect(url_for('login'))
+                finally:
+                    conn.close()
+            else:
+                flash('Código incorrecto', 'danger')
+        return render_template('reset_password.html')
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
  
 @app.route('/finanzas/configuracion', methods=['GET','POST'])
@@ -2663,8 +2654,7 @@ def pago_nuevo():
         flash("Comprobante generado", "success")
         return redirect(url_for('ver_comprobante', id_comprobante=id_comp, back=url_for('finanzas')))
     except Exception as e:
-        flash(f"Error generando comprobante: {e}", "danger")
-        return redirect(url_for('finanzas'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 
@@ -2688,10 +2678,13 @@ def venta_nueva():
         flash("Comprobante generado", "success")
         return redirect(url_for('ver_comprobante', id_comprobante=id_comp, back=url_for('finanzas')))
     except Exception as e:
-        flash(f"Error generando comprobante: {e}", "danger")
-        return redirect(url_for('finanzas'))
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
