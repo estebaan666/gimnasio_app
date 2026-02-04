@@ -1,4 +1,5 @@
 Flask
 Flask-Cors
-PyMySQL
 gunicorn
+psycopg2-binary
+PyMySQL

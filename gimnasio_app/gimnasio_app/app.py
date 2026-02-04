@@ -21,7 +21,30 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 from flask import url_for, flash, redirect, render_template, request
-from conexion import obtener_conexion
+
+def get_connection():
+    if os.environ.get('RENDER'):
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+        return psycopg2.connect(
+            host=os.environ.get('DB_HOST'),
+            database=os.environ.get('DB_NAME'),
+            user=os.environ.get('DB_USER'),
+            password=os.environ.get('DB_PASSWORD'),
+            port=os.environ.get('DB_PORT'),
+            cursor_factory=RealDictCursor
+        )
+    else:
+        return pymysql.connect(
+            host='127.0.0.1',
+            user='root',
+            password='',
+            database='ginnasio',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+obtener_conexion = get_connection
+
 
 
 
