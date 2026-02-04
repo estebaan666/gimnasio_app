@@ -70,7 +70,7 @@ app.secret_key = 'gimnasio_secret_key'
 CORS(app)
 
 _BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-_CMP_PATH = os.path.join(_BASE_DIR, 'gimnasio_app', 'comprobantes_module.py')
+_CMP_PATH = os.path.join(_BASE_DIR, 'comprobantes_module.py')
 try:
     _spec = importlib.util.spec_from_file_location('comprobantes_module', _CMP_PATH)
     comprobantes_module = importlib.util.module_from_spec(_spec)
