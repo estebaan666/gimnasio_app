@@ -23,7 +23,7 @@ from werkzeug.utils import secure_filename
 from flask import url_for, flash, redirect, render_template, request
 
 def get_connection():
-    if os.environ.get('RENDER'):
+    if os.environ.get("RENDER", "").lower() == "true":
         import psycopg2
         from psycopg2.extras import RealDictCursor
         return psycopg2.connect(
