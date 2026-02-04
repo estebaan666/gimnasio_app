@@ -1,0 +1,6 @@
+@echo off
+echo Iniciando entorno virtual...
+call venv\Scripts\activate
+echo Ejecutando aplicacion...
+python app.py
+pause
