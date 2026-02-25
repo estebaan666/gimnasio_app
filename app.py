@@ -1,47 +1,43 @@
-from flask import Flask, jsonify, request, render_template, redirect, url_for, flash, session, send_file
 import os
 import csv
-from datetime import datetime, date
-from flask_cors import CORS
-import pymysql
-import os
 import uuid
-from werkzeug.utils import secure_filename
-from datetime import datetime, timedelta, date
-from functools import wraps
-import random
 import string
-from urllib.parse import urljoin
+import random
+import shutil
 import urllib.parse
+from datetime import datetime, date, timedelta
+from functools import wraps
+from flask import Flask, jsonify, request, render_template, redirect, url_for, flash, session, send_file
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from urllib.parse import urlparse
 import importlib.util
 from jinja2 import ChoiceLoader, FileSystemLoader
+
 app = Flask(__name__)
-import os
-import os
-import uuid
-from werkzeug.utils import secure_filename
-from flask import url_for, flash, redirect, render_template, request
 
 def get_connection():
-    if os.environ.get("RENDER", "").lower() == "true":
-        import psycopg2
-        from psycopg2.extras import RealDictCursor
+    # Usar exclusivamente la variable de entorno DATABASE_URL para Render
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url:
         return psycopg2.connect(
-            host=os.environ.get('DB_HOST'),
-            database=os.environ.get('DB_NAME'),
-            user=os.environ.get('DB_USER'),
-            password=os.environ.get('DB_PASSWORD'),
-            port=os.environ.get('DB_PORT'),
+            db_url,
+            sslmode='require',
             cursor_factory=RealDictCursor
         )
-    else:
-        return pymysql.connect(
-            host='127.0.0.1',
-            user='root',
-            password='',
-            database='ginnasio',
-            cursorclass=pymysql.cursors.DictCursor
-        )
+    
+    # Fallback para desarrollo local (PostgreSQL)
+    return psycopg2.connect(
+        host=os.environ.get('DB_HOST', '127.0.0.1'),
+        database=os.environ.get('DB_NAME', 'ginnasio'),
+        user=os.environ.get('DB_USER', 'postgres'),
+        password=os.environ.get('DB_PASSWORD', ''),
+        port=os.environ.get('DB_PORT', '5432'),
+        cursor_factory=RealDictCursor
+    )
 
 obtener_conexion = get_connection
 
@@ -132,14 +128,14 @@ def active_gym_id():
 def _has_column(conn, table, column):
     with conn.cursor() as cursor:
         cursor.execute(
-            "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s AND COLUMN_NAME=%s",
+            "SELECT 1 FROM information_schema.COLUMNS WHERE table_schema='public' AND table_name=%s AND column_name=%s",
             (table, column)
         )
         return cursor.fetchone() is not None
 def _table_exists(conn, table):
     with conn.cursor() as cursor:
         cursor.execute(
-            "SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=%s",
+            "SELECT 1 FROM information_schema.TABLES WHERE table_schema='public' AND table_name=%s",
             (table,)
         )
         return cursor.fetchone() is not None
@@ -224,11 +220,12 @@ def crear_comprobante_pdf(conn, id_gym, tipo, id_pago, id_producto, cliente, des
         cursor.execute(
             """
             INSERT INTO comprobantes(id_gimnasio,id_pago,id_producto,tipo,descripcion,ruta_pdf,total,fecha_generado)
-            VALUES(%s,%s,%s,%s,%s,%s,%s,NOW())
+            VALUES(%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP)
+            RETURNING id_comprobante
             """,
             (id_gym, id_pago, id_producto, tipo, descripcion, web_ruta, total)
         )
-        id_comp = cursor.lastrowid
+        id_comp = cursor.fetchone()['id_comprobante']
     conn.commit()
     return id_comp, numero, ruta_pdf
 
@@ -277,14 +274,15 @@ def crear_comprobante(obtener_con, id_gym, cliente, items, metodo_pago, descuent
             cursor.execute(
                 """
                 INSERT INTO comprobantes(id_gimnasio, numero, fecha, nombre_cliente, documento_cliente, correo_cliente, metodo_pago, subtotal, descuento, total_pagado, id_vendedor, codigo_transaccion, numero_referencia, qr_url)
-                VALUES(%s,%s,NOW(),%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                VALUES(%s,%s,CURRENT_TIMESTAMP,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                RETURNING id_comprobante
                 """,
                 (
                     id_gym, numero, (cliente or {}).get('nombre'), (cliente or {}).get('documento'), (cliente or {}).get('correo'),
                     metodo_pago, subtotal, descuento_val, total, id_vendedor, codigo_tx, numero_referencia, None
                 )
             )
-            id_comp = cursor.lastrowid
+            id_comp = cursor.fetchone()['id_comprobante']
             
             # Insertar detalles
             for it in items:
@@ -388,11 +386,12 @@ def generar_comprobante_unificado(conn, id_gym, tipo_origen, id_origen, cliente_
         cursor.execute(
             """
             INSERT INTO comprobantes(id_gimnasio, id_pago, id_producto, tipo, descripcion, ruta_pdf, total, fecha_generado)
-            VALUES(%s, %s, %s, %s, %s, %s, %s, NOW())
+            VALUES(%s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id_comprobante
             """,
             (id_gym, id_pago_val, id_producto_val, tipo_origen, desc_general, ruta_pdf_rel, total_pagado)
         )
-        id_comp = cursor.lastrowid
+        id_comp = cursor.fetchone()['id_comprobante']
         
         # 2. Insertar detalles (Esquema VERIFICADO: concepto en vez de descripcion)
         for it in items:
@@ -496,9 +495,9 @@ def listar_comprobantes():
         sql = "SELECT * FROM comprobantes WHERE 1=1"
         params = []
         if fi:
-            sql += " AND DATE(fecha) >= %s"; params.append(fi)
+            sql += " AND fecha::date >= %s"; params.append(fi)
         if ff:
-            sql += " AND DATE(fecha) <= %s"; params.append(ff)
+            sql += " AND fecha::date <= %s"; params.append(ff)
         if mp:
             sql += " AND metodo_pago = %s"; params.append(mp)
         if nc:
@@ -527,9 +526,9 @@ def comprobantes_filtrar():
         sql = "SELECT c.* FROM comprobantes c WHERE 1=1"
         params = []
         if fi:
-            sql += " AND DATE(c.fecha_generado) >= %s"; params.append(fi)
+            sql += " AND c.fecha_generado::date >= %s"; params.append(fi)
         if ff:
-            sql += " AND DATE(c.fecha_generado) <= %s"; params.append(ff)
+            sql += " AND c.fecha_generado::date <= %s"; params.append(ff)
         if numero:
             sql += " AND c.ruta_pdf LIKE %s"; params.append(f"%{numero}%")
         with conn.cursor() as cursor:
@@ -793,8 +792,7 @@ def index():
             cursor.execute("""
                 SELECT COUNT(*) AS nuevos
                   FROM clientes
-                 WHERE MONTH(fecha_registro)=MONTH(CURRENT_DATE())
-                   AND YEAR(fecha_registro)=YEAR(CURRENT_DATE())
+                 WHERE DATE_TRUNC('month', fecha_registro) = DATE_TRUNC('month', CURRENT_DATE)
             """)
             nuevas_inscripciones = cursor.fetchone()['nuevos']
 
@@ -802,7 +800,7 @@ def index():
             cursor.execute("""
                 SELECT COUNT(DISTINCT id_cliente) AS activos
                   FROM membresias
-                 WHERE fecha_fin >= CURRENT_DATE()
+                 WHERE fecha_fin >= CURRENT_DATE
             """)
             miembros_activos = cursor.fetchone()['activos']
 
@@ -815,7 +813,7 @@ def index():
                 FROM clientes c
                 JOIN membresias m ON c.id_cliente = m.id_cliente
                 LEFT JOIN tipos_membresia t ON m.id_tipo_membresia = t.id_tipo_membresia
-                WHERE m.fecha_fin >= CURRENT_DATE()
+                WHERE m.fecha_fin >= CURRENT_DATE
                 ORDER BY c.nombre ASC
             """)
             clientes_activos = cursor.fetchall()
@@ -843,7 +841,7 @@ def index():
                 FROM membresias m
                 JOIN clientes c ON m.id_cliente = c.id_cliente
                 JOIN tipos_membresia t ON m.id_tipo_membresia = t.id_tipo_membresia
-                WHERE m.fecha_fin < CURRENT_DATE()
+                WHERE m.fecha_fin < CURRENT_DATE
                 ORDER BY m.fecha_fin DESC
             """)
             membresias_vencidas = cursor.fetchall()
@@ -860,7 +858,7 @@ def index():
                     m['foto_url'] = url_for('static', filename='img/default-user.png')
 
             # Ingresos del dÃ­a
-            cursor.execute("SELECT SUM(monto) AS total FROM pagos WHERE DATE(fecha_pago)=CURRENT_DATE()")
+            cursor.execute("SELECT SUM(monto) AS total FROM pagos WHERE fecha_pago::date=CURRENT_DATE")
             ingresos = cursor.fetchone()
             ingresos_dia = ingresos['total'] or 0
 
@@ -1001,6 +999,7 @@ def nuevo_cliente():
                         telefono, email, direccion, foto, enfermedades, alergias,
                         fracturas, observaciones_medicas
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id_cliente
                 """
                 cursor.execute(sql, (
                     nombre, apellido, identificacion, genero, fecha_nacimiento,
@@ -1008,7 +1007,7 @@ def nuevo_cliente():
                     (alergias or ''), (fracturas or ''), (observaciones or '')
                 ))
 
-                id_cliente = cursor.lastrowid
+                id_cliente = cursor.fetchone()['id_cliente']
 
                 # Insertar medidas corporales si hay datos
                 if any(v is not None for v in [peso, altura, imc, cintura, pecho, brazo, pierna]) or (observaciones_medidas and observaciones_medidas.strip()):
@@ -1176,10 +1175,10 @@ def asignar_clase_entrenador(id_entrenador):
                 fecha_hora = request.form['fecha_hora']
                 duracion = request.form.get('duracion') or 60
                 cur.execute(
-                    "INSERT INTO clases (nombre_clase,id_entrenador,fecha_hora,duracion,max_participantes) VALUES (%s,%s,%s,%s,%s)",
+                    "INSERT INTO clases (nombre_clase,id_entrenador,fecha_hora,duracion,max_participantes) VALUES (%s,%s,%s,%s,%s) RETURNING id_clase",
                     (nombre_clase, id_entrenador, fecha_hora, duracion, 1)
                 )
-                id_clase = cur.lastrowid
+                id_clase = cur.fetchone()['id_clase']
 
                 # Inscribir cliente a la clase
                 cur.execute(
@@ -1199,10 +1198,11 @@ def asignar_clase_entrenador(id_entrenador):
                         INSERT INTO rutinas_personalizadas
                           (titulo, descripcion, id_cliente, id_entrenador, fecha_inicio, fecha_fin, duracion_dias)
                         VALUES (%s,%s,%s,%s,%s,%s,%s)
+                        RETURNING id_rutina
                         """,
                         (titulo, descripcion, id_cliente, id_entrenador, fi, ff, 7)
                     )
-                    id_rutina = cur.lastrowid
+                    id_rutina = cur.fetchone()['id_rutina']
 
                     dias = ["Lunes","Martes","Miercoles","Jueves","Viernes"]
                     for d in dias:
@@ -1339,12 +1339,12 @@ def obtener_productos():
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS promociones (
-                    id_promocion INT AUTO_INCREMENT PRIMARY KEY,
+                    id_promocion SERIAL PRIMARY KEY,
                     id_producto INT NOT NULL,
                     precio_promocional DECIMAL(10,2) NOT NULL,
                     frase VARCHAR(255),
-                    incluir_foto TINYINT(1) DEFAULT 1,
-                    activo TINYINT(1) DEFAULT 1,
+                    incluir_foto SMALLINT DEFAULT 1,
+                    activo SMALLINT DEFAULT 1,
                     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
                 """
@@ -1424,7 +1424,7 @@ def editar_producto(id_producto):
 
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    UPDATE producto SET nombre=%s, descripcion=%s, precio=%s, stock=%s, foto=%s, actualizado_en=NOW()
+                    UPDATE producto SET nombre=%s, descripcion=%s, precio=%s, stock=%s, foto=%s, actualizado_en=CURRENT_TIMESTAMP
                     WHERE id_producto=%s
                 """, (nombre, descripcion, precio, stock, filename, id_producto))
             conn.commit()
@@ -1458,12 +1458,12 @@ def promocionar_producto(id_producto):
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS promociones (
-                    id_promocion INT AUTO_INCREMENT PRIMARY KEY,
+                    id_promocion SERIAL PRIMARY KEY,
                     id_producto INT NOT NULL,
                     precio_promocional DECIMAL(10,2) NOT NULL,
                     frase VARCHAR(255),
-                    incluir_foto TINYINT(1) DEFAULT 1,
-                    activo TINYINT(1) DEFAULT 1,
+                    incluir_foto SMALLINT DEFAULT 1,
+                    activo SMALLINT DEFAULT 1,
                     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
                 """
@@ -1571,9 +1571,9 @@ def nueva_venta(id_producto):
             cambio = (efectivo_val - total) if (efectivo_val is not None) else None
 
             with conn.cursor() as cursor:
-                cursor.execute("INSERT INTO ventas(id_producto, cantidad, total) VALUES (%s,%s,%s)",
+                cursor.execute("INSERT INTO ventas(id_producto, cantidad, total) VALUES (%s,%s,%s) RETURNING id_venta",
                                (id_producto, cantidad, total))
-                id_venta = cursor.lastrowid
+                id_venta = cursor.fetchone()['id_venta']
                 cursor.execute("UPDATE producto SET stock = stock - %s WHERE id_producto=%s",
                                (cantidad, id_producto))
 
@@ -1581,7 +1581,7 @@ def nueva_venta(id_producto):
                 cursor.execute(
                     """
                     INSERT INTO finanzas(tipo, descripcion, monto, fecha, origen)
-                    VALUES ('ingreso', %s, %s, NOW(), 'producto')
+                    VALUES ('ingreso', %s, %s, CURRENT_TIMESTAMP, 'producto')
                     """,
                     (f"Venta de {producto['nombre']}", total)
                 )
@@ -1651,11 +1651,11 @@ def finanzas():
         params = []
         
         if fecha:
-            where += " AND DATE(fecha)=%s"
+            where += " AND fecha::date=%s"
             params.append(fecha)
         elif mes:
-            where += " AND DATE_FORMAT(fecha,'%Y-%m')=%s"
-            params.append(mes)
+            where += " AND DATE_TRUNC('month', fecha) = DATE_TRUNC('month', %s::date)"
+            params.append(f"{mes}-01")
             
         with conn.cursor() as cursor:
             # 1. Obtener Movimientos (Ingresos y Gastos) de la tabla finanzas
@@ -1718,7 +1718,7 @@ def nuevo_gasto():
                 cursor.execute(
                     """
                     INSERT INTO finanzas(tipo, descripcion, monto, fecha, origen)
-                    VALUES ('gasto', %s, %s, NOW(), 'otro')
+                    VALUES ('gasto', %s, %s, CURRENT_TIMESTAMP, 'otro')
                     """,
                     (descripcion, monto)
                 )
@@ -1752,7 +1752,7 @@ def editar_gasto(id):
                 if _has_column(conn, 'gastos', 'id_gimnasio'):
                     cursor.execute(
                         """
-                        UPDATE gastos SET descripcion=%s, monto=%s, fecha=NOW()
+                        UPDATE gastos SET descripcion=%s, monto=%s, fecha=CURRENT_TIMESTAMP
                          WHERE id_gasto=%s AND id_gimnasio=%s
                         """,
                         (descripcion, monto, id, active_gym_id())
@@ -1760,7 +1760,7 @@ def editar_gasto(id):
                 else:
                     cursor.execute(
                         """
-                        UPDATE gastos SET descripcion=%s, monto=%s, fecha=NOW()
+                        UPDATE gastos SET descripcion=%s, monto=%s, fecha=CURRENT_TIMESTAMP
                          WHERE id_gasto=%s
                         """,
                         (descripcion, monto, id)
@@ -1805,7 +1805,7 @@ def obtener_inscripciones():
             inscripciones = cursor.fetchall()
             cursor.execute("SELECT id_cliente,nombre,apellido FROM clientes")
             clientes = cursor.fetchall()
-            cursor.execute("SELECT id_clase,nombre_clase,fecha_hora FROM clases WHERE fecha_hora>NOW()")
+            cursor.execute("SELECT id_clase,nombre_clase,fecha_hora FROM clases WHERE fecha_hora>CURRENT_TIMESTAMP")
             clases = cursor.fetchall()
         return render_template('inscripciones.html', inscripciones=inscripciones, clientes=clientes, clases=clases)
     except Exception as e:
@@ -1834,7 +1834,7 @@ def nueva_inscripcion():
     with conn.cursor() as cursor:
         cursor.execute("SELECT id_cliente,nombre,apellido FROM clientes")
         clientes = cursor.fetchall()
-        cursor.execute("SELECT id_clase,nombre_clase,fecha_hora FROM clases WHERE fecha_hora>NOW()")
+        cursor.execute("SELECT id_clase,nombre_clase,fecha_hora FROM clases WHERE fecha_hora>CURRENT_TIMESTAMP")
         clases = cursor.fetchall()
     conn.close()
     return render_template('nueva_inscripcion.html', clientes=clientes, clases=clases)
@@ -1936,15 +1936,17 @@ def nueva_membresia():
                 cursor.execute("""
                     INSERT INTO membresias (id_cliente, id_tipo_membresia, fecha_inicio, fecha_fin)
                     VALUES (%s, %s, %s, %s)
+                    RETURNING id_membresia
                 """, (id_cliente, id_tipo, fecha_inicio, fecha_fin))
-                id_membresia = cursor.lastrowid
+                id_membresia = cursor.fetchone()['id_membresia']
 
                 # 2) Insertar pago asociado
                 cursor.execute("""
                     INSERT INTO pagos (id_cliente, id_membresia, monto, metodo_pago, numero_referencia)
                     VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id_pago
                 """, (id_cliente, id_membresia, monto, metodo_pago, numero_referencia))
-                id_pago_nuevo = cursor.lastrowid # Capturar ID del pago
+                id_pago_nuevo = cursor.fetchone()['id_pago'] # Capturar ID del pago
                 conn.commit()
 
                 # 3) Registrar ingreso en finanzas (lógica implícita o manejada por triggers/vistas) y generar comprobante
@@ -2003,7 +2005,7 @@ def nueva_membresia():
                 cursor.execute(
                     """
                     INSERT INTO finanzas(tipo, descripcion, monto, fecha, origen)
-                    VALUES ('ingreso', %s, %s, NOW(), 'membresia')
+                    VALUES ('ingreso', %s, %s, CURRENT_TIMESTAMP, 'membresia')
                     """,
                     (f"Membresía {nombre_tipo or 'N/A'} ({freq}) - {nombre_completo}", monto)
                 )
@@ -2110,7 +2112,7 @@ def obtener_pagos():
                   m.fecha_fin
                 FROM membresias m
                 JOIN tipos_membresia t ON m.id_tipo_membresia=t.id_tipo_membresia
-                WHERE m.fecha_fin>=CURRENT_DATE()
+                WHERE m.fecha_fin>=CURRENT_DATE
             """)
             membresias = cursor.fetchall()
 
@@ -2136,8 +2138,9 @@ def nuevo_pago():
                 cursor.execute("""
                     INSERT INTO pagos (id_cliente,id_membresia,monto,metodo_pago)
                     VALUES (%s,%s,%s,%s)
+                    RETURNING id_pago
                 """, (id_cliente, id_memb, monto, metodo))
-                id_pago = cursor.lastrowid
+                id_pago = cursor.fetchone()['id_pago']
                 conn.commit()
 
                 # Registrar ingreso en finanzas (si estÃ¡ asociado a una membresÃ­a)
@@ -2192,7 +2195,7 @@ def nuevo_pago():
               m.fecha_fin
             FROM membresias m
             JOIN tipos_membresia t ON m.id_tipo_membresia=t.id_tipo_membresia
-            WHERE m.fecha_fin>=CURRENT_DATE()
+            WHERE m.fecha_fin>=CURRENT_DATE
         """)
         membresias = cursor.fetchall()
     conn.close()
@@ -2269,8 +2272,9 @@ def rutinas_nueva():
                     INSERT INTO rutinas_personalizadas
                       (titulo, descripcion, id_cliente, id_entrenador, fecha_inicio, fecha_fin, duracion_dias)
                     VALUES (%s,%s,%s,%s,%s,%s,%s)
+                    RETURNING id_rutina
                 """, (titulo, descripcion, id_cliente, id_entrenador, fecha_inicio, fecha_fin, 30))
-                id_rutina = cur.lastrowid
+                id_rutina = cur.fetchone()['id_rutina']
 
                 # Horarios de lunes a sÃ¡bado
                 dias = ["Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"]
@@ -2460,7 +2464,7 @@ def proximas_membresias_vencer():
                 FROM membresias m
                 JOIN clientes c ON m.id_cliente = c.id_cliente
                 LEFT JOIN tipos_membresia t ON m.id_tipo_membresia = t.id_tipo_membresia
-                WHERE m.fecha_fin BETWEEN CURRENT_DATE() AND DATE_ADD(CURRENT_DATE(), INTERVAL 30 DAY)
+                WHERE m.fecha_fin BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'
                 ORDER BY m.fecha_fin ASC
             """)
             membresias = cursor.fetchall()
@@ -2478,14 +2482,24 @@ def login():
             conn = obtener_conexion()
             try:
                 with conn.cursor() as cursor:
-                    cursor.execute("SELECT * FROM usuarios WHERE usuario=%s AND password=%s", (usuario, password))
+                    cursor.execute("SELECT * FROM usuarios WHERE usuario=%s", (usuario,))
                     user = cursor.fetchone()
                     if user:
-                        session['usuario'] = usuario
-                        flash('Bienvenido, sesión iniciada correctamente', 'success')
-                        return redirect(url_for('index'))
-                    else:
-                        flash('Usuario o contraseña incorrectos', 'danger')
+                        valid = False
+                        try:
+                            valid = check_password_hash(user['password'], password)
+                        except Exception:
+                            valid = False
+                        if not valid and user['password'] == password:
+                            hashed = generate_password_hash(password)
+                            cursor.execute("UPDATE usuarios SET password=%s WHERE usuario=%s", (hashed, usuario))
+                            conn.commit()
+                            valid = True
+                        if valid:
+                            session['usuario'] = usuario
+                            flash('Bienvenido, sesión iniciada correctamente', 'success')
+                            return redirect(url_for('index'))
+                    flash('Usuario o contraseña incorrectos', 'danger')
             finally:
                 conn.close()
         return render_template('login.html')
@@ -2516,7 +2530,8 @@ def register():
                     if existe:
                         flash('El usuario o correo ya existe', 'danger')
                     else:
-                        cursor.execute("INSERT INTO usuarios (usuario, email, password) VALUES (%s, %s, %s)", (usuario, email, password))
+                        hashed = generate_password_hash(password)
+                        cursor.execute("INSERT INTO usuarios (usuario, email, password) VALUES (%s, %s, %s)", (usuario, email, hashed))
                         conn.commit()
                         flash('Cuenta creada correctamente, ahora puedes iniciar sesión', 'success')
                         return redirect(url_for('login'))
@@ -2562,7 +2577,8 @@ def reset_password():
                 conn = obtener_conexion()
                 try:
                     with conn.cursor() as cursor:
-                        cursor.execute("UPDATE usuarios SET password=%s WHERE email=%s", (password, email))
+                        hashed = generate_password_hash(password)
+                        cursor.execute("UPDATE usuarios SET password=%s WHERE email=%s", (hashed, email))
                         conn.commit()
                         flash('Contraseña restablecida correctamente', 'success')
                         session.pop('reset_email', None)
@@ -2687,4 +2703,5 @@ def handle_exception(e):
     return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

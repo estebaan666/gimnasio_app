@@ -2,4 +2,4 @@ Flask
 Flask-Cors
 gunicorn
 psycopg2-binary
-PyMySQL
+python-dotenv

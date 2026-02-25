@@ -3,7 +3,7 @@ services:
     name: gimnasio_app
     env: python
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
     plan: free
     branch: master
     repo: https://github.com/estebaan666/gimnasio_app
